@@ -212,16 +212,10 @@
         <button class="modal-close" id="close-modal" aria-label="Close" type="button">×</button>
         <div class="modal-kicker">NEW EXPENSE</div>
         <h2 id="modal-title">What did you pay for?</h2>
-        <p class="modal-subtitle">Describe it naturally. Split Sense will figure out the fair split.</p>
+        <p class="modal-subtitle">Describe the expense, amount, and who was there. Nemotron will figure out the fair split.</p>
         <form id="expense-form">
           <label class="field-label" for="expense-description">Expense description</label>
-          <textarea id="expense-description" required>Paid $84 for dinner at Nonna's, Sam wasn't there</textarea>
-          <div class="form-grid">
-            <div><label class="field-label" for="expense-amount">Amount</label><div class="input-with-prefix"><span>$</span><input id="expense-amount" type="number" min="0" step="0.01" value="84" required /></div></div>
-            <div><label class="field-label" for="expense-payer">Paid by</label><select id="expense-payer"><option>Alex</option><option>Sam</option><option>Priya</option><option>Leo</option></select></div>
-          </div>
-          <label class="field-label" for="expense-members">Group members</label>
-          <input id="expense-members" value="Alex, Sam, Priya, Leo" />
+          <textarea id="expense-description" required placeholder="Dinner was $84. Sam wasn't there."></textarea>
           <button class="primary-button modal-submit" type="submit"><span>✦</span> Analyze fair split</button>
           <p class="form-error" id="form-error" role="alert"></p>
         </form>

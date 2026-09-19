@@ -452,41 +452,12 @@ function parseMembers(value) {
   return value.split(",").map((name) => name.trim()).filter(Boolean);
 }
 
-function localClassification(text, group, payer) {
-  const cleaned = text.toLowerCase();
-  const categories = {
-    food: ["dinner", "food", "groceries", "brunch", "lunch", "restaurant", "coffee", "pizza"],
-    lodging: ["hotel", "room", "lodging", "airbnb", "stay"],
-    transport: ["uber", "lyft", "train", "flight", "gas", "taxi", "transport", "bus"]
-  };
-  const category = Object.entries(categories).find(([, words]) => words.some((word) => cleaned.includes(word)))?.[0] || "misc";
-  const excluded = group.filter((person) => new RegExp(`${person.toLowerCase()} (wasn't|was not|not) there|${person.toLowerCase()} (didn't|did not) go`).test(cleaned));
-  const included = excluded.length ? group.filter((person) => !excluded.includes(person)) : [...group];
-  if (!included.includes(payer)) included.unshift(payer);
-  return { category, amount_confidence: category === "misc" ? "medium" : "high", participants_included: included, participants_excluded: excluded, split_hint: excluded.length ? "exclude_named" : "equal", ambiguity_flags: excluded.length ? ["participant_absence_detected"] : [] };
-}
-
-function localSplit(amount, group) {
-  const perPerson = Math.round((amount / group.length) * 100) / 100;
-  return { amount, total: Math.round(perPerson * group.length * 100) / 100, per_person: perPerson, breakdown: Object.fromEntries(group.map((person) => [person, perPerson])) };
-}
-
-async function requestAnalysis(text, group, payer, amount) {
-  const classifyParams = new URLSearchParams({ text, payer });
-  group.forEach((person) => classifyParams.append("group", person));
-  try {
-    const classificationResponse = await fetch(`${API_URL}/classify?${classifyParams}`, { method: "POST" });
-    if (!classificationResponse.ok) throw new Error("Classification failed");
-    const classification = await classificationResponse.json();
-    const splitParams = new URLSearchParams({ amount, split_hint: classification.split_hint });
-    classification.participants_included.forEach((person) => splitParams.append("group", person));
-    const splitResponse = await fetch(`${API_URL}/split?${splitParams}`, { method: "POST" });
-    if (!splitResponse.ok) throw new Error("Split failed");
-    return { classification, split: await splitResponse.json(), source: "API" };
-  } catch {
-    const classification = localClassification(text, group, payer);
-    return { classification, split: localSplit(amount, classification.participants_included), source: "Demo mode" };
-  }
+async function requestAnalysis(text) {
+  const analysisParams = new URLSearchParams({ text });
+  const response = await fetch(`${API_URL}/expense-analysis?${analysisParams}`, { method: "POST" });
+  const analysis = await response.json();
+  if (!response.ok) throw new Error(analysis.error || "Expense analysis failed");
+  return analysis;
 }
 
 function renderResult({ classification, split, source }) {
@@ -516,20 +487,22 @@ if (form) {
     errorMessage.textContent = "";
     result.classList.remove("show");
     const text = document.querySelector("#expense-description").value.trim();
-    const amount = Number(document.querySelector("#expense-amount").value);
-    const payer = document.querySelector("#expense-payer").value;
-    const group = parseMembers(document.querySelector("#expense-members").value);
-    if (!text || Number.isNaN(amount) || amount < 0 || group.length === 0) {
-      errorMessage.textContent = "Add a description, a valid amount, and at least one member.";
+    if (!text) {
+      errorMessage.textContent = "Describe the expense, including its amount and who was there.";
       return;
     }
     const submit = form.querySelector("button[type=submit]");
     submit.disabled = true;
     submit.innerHTML = "<span>◌</span> Analyzing…";
-    const analysis = await requestAnalysis(text, group, payer, amount);
-    renderResult(analysis);
-    submit.disabled = false;
-    submit.innerHTML = "<span>✦</span> Analyze fair split";
+    try {
+      const analysis = await requestAnalysis(text);
+      renderResult(analysis);
+    } catch (error) {
+      errorMessage.textContent = error.message || "Nemotron could not analyze this expense.";
+    } finally {
+      submit.disabled = false;
+      submit.innerHTML = "<span>✦</span> Analyze fair split";
+    }
   });
 }
 

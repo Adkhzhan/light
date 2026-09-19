@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from split_logic import classify_expense, compute_split
@@ -7,6 +8,7 @@ from nemotron_client import analyze_trip_with_nemotron, classify_expense_with_ne
     
 BASE_DIR = Path(__file__).resolve().parent
 FRONTEND_DIR = BASE_DIR / "frontend"
+DEFAULT_GROUP = ["Alex", "Sam", "Priya", "Leo"]
 
 from flask import Flask, jsonify, request, send_from_directory
 
@@ -79,6 +81,39 @@ def split_endpoint():
 
     split = compute_split(amount=amount, group=group, split_hint=split_hint)
     return jsonify(split)
+
+
+@app.route("/expense-analysis", methods=["GET", "POST"])
+def expense_analysis_endpoint():
+    text = request.args.get("text") or request.form.get("text") or ""
+    if not text.strip():
+        return jsonify({"error": "An expense description is required."}), 400
+
+    group = DEFAULT_GROUP
+    payer = group[0]
+    heuristic_classification = classify_expense(text, group, payer)
+    source = "Nemotron"
+    try:
+        classification = classify_expense_with_nemotron(text, group, payer)
+        if "raw_response" in classification:
+            raise ValueError("Nemotron returned an invalid expense classification")
+    except Exception:
+        classification = heuristic_classification
+        source = "Rule fallback"
+
+    amount_match = re.search(r"(?:\$|amount\s*[:=]?\s*)?(\d+(?:\.\d{1,2})?)", text, re.IGNORECASE)
+    if not amount_match:
+        return jsonify({"error": "Include the expense amount in the description, for example: dinner was $84."}), 400
+
+    amount = float(amount_match.group(1))
+    excluded = set(heuristic_classification["participants_excluded"])
+    excluded.update(name for name in classification.get("participants_excluded", []) if name in group)
+    included = [name for name in group if name not in excluded]
+    classification["participants_excluded"] = [name for name in group if name in excluded]
+    classification["participants_included"] = included
+    classification["split_hint"] = "exclude_named" if excluded else classification.get("split_hint", "equal")
+    split = compute_split(amount, included, classification["split_hint"])
+    return jsonify({"amount": amount, "classification": classification, "split": split, "source": source})
 
 
 @app.route("/health", methods=["GET"])
