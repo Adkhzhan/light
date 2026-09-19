@@ -949,6 +949,10 @@ a {
   position: relative
 }
 
+.insight-card[hidden] {
+  display: none
+}
+
 .insight-sparkle {
   background: #ffe8a9;
   width: 34px;

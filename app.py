@@ -26,6 +26,15 @@ def _read_group_values() -> list[str]:
     return parsed
 
 
+def _infer_payer(text: str, group: list[str], default: str) -> str:
+    lowered = text.lower()
+    for person in group:
+        name = re.escape(person.lower())
+        if re.search(rf"{name}\s+(?:paid|covered|bought)", lowered) or re.search(rf"paid\s+by\s+{name}", lowered):
+            return person
+    return default
+
+
 @app.route("/")
 def index():
     return send_from_directory(FRONTEND_DIR, "index.html")
@@ -45,7 +54,7 @@ def classify_endpoint():
     if not group:
         return jsonify({"error": "At least one group member is required."}), 400
 
-    payer = payer or group[0]
+    payer = _infer_payer(text, group, payer or group[0])
     heuristic_classification = classify_expense(text, group, payer)
     try:
         classification = classify_expense_with_nemotron(text, group, payer)
@@ -57,11 +66,13 @@ def classify_endpoint():
     excluded = set(heuristic_classification["participants_excluded"])
     excluded.update(name for name in classification.get("participants_excluded", []) if name in group)
     included = [name for name in group if name not in excluded]
-    if payer not in included:
+    if payer not in included and payer not in excluded:
         included.insert(0, payer)
     classification["participants_excluded"] = [name for name in group if name in excluded]
     classification["participants_included"] = included
+    classification["payer"] = payer
     classification["split_hint"] = "exclude_named" if excluded else classification.get("split_hint", "equal")
+    classification.setdefault("summary", f"{classification.get('category', 'misc').capitalize()} expense")
     return jsonify(classification)
 
 
@@ -90,7 +101,7 @@ def expense_analysis_endpoint():
         return jsonify({"error": "An expense description is required."}), 400
 
     group = DEFAULT_GROUP
-    payer = group[0]
+    payer = _infer_payer(text, group, group[0])
     heuristic_classification = classify_expense(text, group, payer)
     source = "Nemotron"
     try:
@@ -111,7 +122,9 @@ def expense_analysis_endpoint():
     included = [name for name in group if name not in excluded]
     classification["participants_excluded"] = [name for name in group if name in excluded]
     classification["participants_included"] = included
+    classification["payer"] = payer
     classification["split_hint"] = "exclude_named" if excluded else classification.get("split_hint", "equal")
+    classification.setdefault("summary", f"{classification.get('category', 'misc').capitalize()} expense")
     split = compute_split(amount, included, classification["split_hint"])
     return jsonify({"amount": amount, "classification": classification, "split": split, "source": source})
 

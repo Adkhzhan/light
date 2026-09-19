@@ -64,6 +64,31 @@ def test_expense_analysis_route_splits_only_present_members(monkeypatch):
     assert data["split"]["breakdown"] == {"Alex": 28.0, "Leo": 28.0, "Priya": 28.0}
 
 
+def test_expense_analysis_uses_payer_named_in_description(monkeypatch):
+    monkeypatch.setattr(
+        app_module,
+        "classify_expense_with_nemotron",
+        lambda expense_text, group, payer: {
+            "summary": "Dinner",
+            "category": "food",
+            "amount_confidence": "high",
+            "participants_included": ["Sam", "Priya", "Leo"],
+            "participants_excluded": ["Alex"],
+            "split_hint": "exclude_named",
+            "ambiguity_flags": [],
+        },
+    )
+
+    response = app.test_client().post(
+        "/expense-analysis?text=Sam%20paid%20%2490%20for%20dinner.%20Alex%20wasn%27t%20there."
+    )
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["classification"]["payer"] == "Sam"
+    assert data["split"]["breakdown"] == {"Leo": 30.0, "Priya": 30.0, "Sam": 30.0}
+
+
 def test_classify_food_expense_excludes_missing_person():
     result = classify_expense(
         text="Paid $84 for dinner at Nonna's, Sam wasn't there",
