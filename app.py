@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flask import Flask, jsonify, request, send_from_directory
-
 from split_logic import classify_expense, compute_split
 
 BASE_DIR = Path(__file__).resolve().parent
 FRONTEND_DIR = BASE_DIR / "frontend"
+
+from flask import Flask, jsonify, request, send_from_directory
+
 app = Flask(__name__, static_folder=str(FRONTEND_DIR), static_url_path="")
 
 
