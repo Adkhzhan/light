@@ -71,9 +71,10 @@ def _call_nemotron_once(
     payload = {
         "model": model_name,
         "messages": messages,
-        "temperature": 1.0,
+        "temperature": 0.3,
         "top_p": 0.95,
         "max_tokens": max_tokens,
+        "seed": 42,
         "chat_template_kwargs": {"enable_thinking": False},
     }
 
