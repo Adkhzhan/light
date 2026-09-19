@@ -19,6 +19,12 @@ const expenseData = [
   { id: 8, title: "Day trip tickets", dateLabel: "Sep 10", payer: "Leo Wong", amount: 88.45, status: "review", category: "misc" }
 ];
 
+try {
+  const savedExpenses = JSON.parse(localStorage.getItem("splitSenseExpenses") || "[]");
+  if (Array.isArray(savedExpenses)) expenseData.unshift(...savedExpenses);
+} catch {
+}
+
 const balanceData = [
   { name: "Alex Thompson", initials: "AT", color: "avatar-indigo", balance: 186.4, type: "gets back" },
   { name: "Sam Parker", initials: "SP", color: "avatar-yellow", balance: 48.6, type: "gets back" },
@@ -47,9 +53,16 @@ const tripError = document.querySelector("#trip-form-error");
 const workspaceSelector = document.querySelector("#workspace-selector");
 const workspaceMenu = document.querySelector("#workspace-menu");
 const workspaceStatus = document.querySelector("#workspace-menu-status");
+const smartInsight = document.querySelector(".insight-card");
 
 let currentExpenseFilter = "all";
 let expenseSearchText = "";
+
+function dismissSmartInsight() {
+  if (!smartInsight) return;
+  smartInsight.hidden = true;
+  smartInsight.setAttribute("aria-hidden", "true");
+}
 
 function getMemberInitials(name) {
   const member = members.find((item) => item.name === name);
@@ -180,6 +193,21 @@ function renderExpensePage() {
         `;
     }).join("")
     : '<div class="empty-state">No expenses match the current search and filter.</div>';
+}
+
+function addExpenseToHistory(analysis, description) {
+  expenseData.unshift({
+    id: Date.now(),
+    title: analysis.classification.summary || description,
+    dateLabel: "Today",
+    payer: analysis.classification.payer || "Alex",
+    amount: analysis.amount,
+    status: "review",
+    category: analysis.classification.category
+  });
+  localStorage.setItem("splitSenseExpenses", JSON.stringify(expenseData.slice(0, 50)));
+  renderOverviewExpenses();
+  renderExpensePage();
 }
 
 function renderBalancesPage() {
@@ -356,6 +384,11 @@ function closeTripModal() {
 }
 
 document.addEventListener("click", (event) => {
+  if (event.target.closest(".close-insight")) {
+    dismissSmartInsight();
+    return;
+  }
+
   const openExpenseButton = event.target.closest("[data-open-expense]");
   if (openExpenseButton) {
     openModal();
@@ -463,7 +496,7 @@ async function requestAnalysis(text) {
 function renderResult({ classification, split, source }) {
   const categoryLabels = { food: "Food", lodging: "Lodging", transport: "Transport", misc: "Other" };
   const people = Object.entries(split.breakdown).map(([person, value]) => `<div class="result-person"><span>${escapeHTML(person)}</span><b>$${Number(value).toFixed(2)}</b></div>`).join("");
-  result.innerHTML = `<h3>Suggested split <span style="color:#4f9b75;font-size:10px;font-family:'DM Sans'">${source}</span></h3><div class="result-summary"><span class="result-pill">${categoryLabels[classification.category]}</span><span class="result-pill">${classification.split_hint === "equal" ? "Split equally" : "Excluded named guest"}</span><span class="result-pill">${classification.amount_confidence} confidence</span></div><div class="result-breakdown">${people}</div>`;
+  result.innerHTML = `<h3>${escapeHTML(classification.summary || "Suggested split")} <span style="color:#4f9b75;font-size:10px;font-family:'DM Sans'">${source}</span></h3><div class="result-summary"><span class="result-pill">${categoryLabels[classification.category]}</span><span class="result-pill">${classification.split_hint === "equal" ? "Split equally" : "Excluded named guest"}</span><span class="result-pill">${classification.amount_confidence} confidence</span></div><div class="result-breakdown">${people}</div>`;
   result.classList.add("show");
 }
 
@@ -497,6 +530,7 @@ if (form) {
     try {
       const analysis = await requestAnalysis(text);
       renderResult(analysis);
+      addExpenseToHistory(analysis, text);
     } catch (error) {
       errorMessage.textContent = error.message || "Nemotron could not analyze this expense.";
     } finally {

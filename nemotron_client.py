@@ -134,6 +134,8 @@ Expense: {expense_text}
 
 Return JSON only:
 {{
+    "summary": "short description of where the expense went, such as Dinner at Nonna's or Food expense",
+    "payer": "exact payer name from the group",
   "category": "food | transport | lodging | misc",
   "amount_confidence": "high | medium | low",
   "participants_included": ["exact names from the group"],
@@ -143,6 +145,10 @@ Return JSON only:
 }}
 
 Rules:
+- Summarize the expense in 2 to 6 words.
+- If a restaurant, store, hotel, or other named place is given, preserve its name in the summary.
+- For food without a named place, use a clear label such as Food expense or Dinner.
+- Infer the payer from the expense text when it says who paid; do not include someone explicitly absent.
 - Exclude anyone explicitly absent, not there, not attending, or opting out.
 - Include everyone else who benefited, and always include the payer.
 - Use exact names from the group list.
