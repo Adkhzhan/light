@@ -1,8 +1,12 @@
-const API_URL = "http://localhost:8000";
+const API_URL = "";
 const modal = document.querySelector("#expense-modal");
 const form = document.querySelector("#expense-form");
 const result = document.querySelector("#analysis-result");
 const errorMessage = document.querySelector("#form-error");
+const tripModal = document.querySelector("#trip-modal");
+const tripForm = document.querySelector("#trip-form");
+const tripResult = document.querySelector("#trip-analysis-result");
+const tripError = document.querySelector("#trip-form-error");
 
 function openModal() {
   modal.classList.add("open");
@@ -13,10 +17,22 @@ function closeModal() {
   modal.classList.remove("open");
   modal.setAttribute("aria-hidden", "true");
 }
+function openTripModal() {
+  tripModal.classList.add("open");
+  tripModal.setAttribute("aria-hidden", "false");
+  document.querySelector("#trip-description").focus();
+}
+function closeTripModal() {
+  tripModal.classList.remove("open");
+  tripModal.setAttribute("aria-hidden", "true");
+}
 document.querySelector("#new-expense-button").addEventListener("click", openModal);
 document.querySelector("#analyze-insight").addEventListener("click", openModal);
+document.querySelector("#plan-trip-button").addEventListener("click", openTripModal);
 document.querySelector("#close-modal").addEventListener("click", closeModal);
+document.querySelector("#close-trip-modal").addEventListener("click", closeTripModal);
 modal.addEventListener("click", (event) => { if (event.target === modal) closeModal(); });
+tripModal.addEventListener("click", (event) => { if (event.target === tripModal) closeTripModal(); });
 document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeModal(); });
 
 function parseMembers(value) {
@@ -67,6 +83,24 @@ function renderResult({ classification, split, source }) {
   result.classList.add("show");
 }
 
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[character]));
+}
+
+function formatMoney(value, currency) {
+  return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(Number(value) || 0);
+}
+
+function renderTripAnalysis(analysis) {
+  const currency = analysis.currency || "USD";
+  const breakdown = Object.entries(analysis.split || {}).map(([person, amount]) => `<div class="result-person"><span>${escapeHTML(person)}</span><b>${formatMoney(amount, currency)}</b></div>`).join("");
+  const costs = (analysis.cost_breakdown || []).map((cost) => `<div class="trip-cost"><span>${escapeHTML(cost.item)}</span><b>${formatMoney(cost.amount, currency)}</b><small>${escapeHTML(cost.assumption)}</small></div>`).join("");
+  const assumptions = (analysis.assumptions || []).map((item) => `<li>${escapeHTML(item)}</li>`).join("");
+  const questions = (analysis.questions || []).map((item) => `<li>${escapeHTML(item)}</li>`).join("");
+  tripResult.innerHTML = `<div class="trip-total"><span>Estimated trip budget</span><strong>${formatMoney(analysis.estimated_total, currency)}</strong><small>${escapeHTML(analysis.confidence || "medium")} confidence · ${escapeHTML(analysis.source || "Nemotron")}</small></div><div class="trip-per-person"><span>Fair share per person</span><strong>${formatMoney(analysis.per_person, currency)}</strong></div><h3>Cost breakdown</h3><div class="trip-costs">${costs || "<p>No line items returned.</p>"}</div><h3>Suggested split</h3><div class="result-breakdown">${breakdown}</div>${assumptions ? `<div class="trip-notes"><strong>Assumptions</strong><ul>${assumptions}</ul></div>` : ""}${questions ? `<div class="trip-notes trip-questions"><strong>Worth clarifying</strong><ul>${questions}</ul></div>` : ""}`;
+  tripResult.classList.add("show");
+}
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   errorMessage.textContent = "";
@@ -86,4 +120,33 @@ form.addEventListener("submit", async (event) => {
   renderResult(analysis);
   submit.disabled = false;
   submit.innerHTML = "<span>✦</span> Analyze fair split";
+});
+
+tripForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  tripError.textContent = "";
+  tripResult.classList.remove("show");
+  const trip = document.querySelector("#trip-description").value.trim();
+  const currency = document.querySelector("#trip-currency").value;
+  const group = parseMembers(document.querySelector("#trip-members").value);
+  if (!trip || group.length === 0) {
+    tripError.textContent = "Add trip details and at least one group member.";
+    return;
+  }
+  const submit = tripForm.querySelector("button[type=submit]");
+  submit.disabled = true;
+  submit.innerHTML = "<span>◌</span> Asking Nemotron…";
+  const params = new URLSearchParams({ trip, currency });
+  group.forEach((person) => params.append("group", person));
+  try {
+    const response = await fetch(`${API_URL}/trip-analysis?${params}`, { method: "POST" });
+    const analysis = await response.json();
+    if (!response.ok) throw new Error(analysis.error || "Trip analysis failed");
+    renderTripAnalysis(analysis);
+  } catch (error) {
+    tripError.textContent = error.message || "Nemotron could not analyze this trip.";
+  } finally {
+    submit.disabled = false;
+    submit.innerHTML = "<span>✦</span> Estimate trip budget";
+  }
 });

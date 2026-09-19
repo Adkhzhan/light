@@ -9,6 +9,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
+    <style>
+      .welcome-actions{display:flex;gap:10px;align-items:center}.trip-modal{max-width:620px}.trip-analysis-result{display:none;margin-top:20px}.trip-analysis-result.show{display:block}.trip-total{background:#eef8f3;border-radius:12px;padding:16px;margin-bottom:10px}.trip-total span,.trip-per-person span{display:block;color:#66736e;font-size:12px}.trip-total strong,.trip-per-person strong{display:block;font:700 30px "Space Grotesk";margin:4px 0}.trip-total small{color:#6a8879;text-transform:capitalize}.trip-per-person{border:1px solid #e8ece8;border-radius:10px;padding:12px 14px;margin-bottom:18px}.trip-per-person strong{font-size:22px}.trip-analysis-result h3{font:700 13px "Space Grotesk";margin:17px 0 9px}.trip-cost{display:grid;grid-template-columns:1fr auto;gap:3px 12px;border-bottom:1px solid #e8ece8;padding:9px 0}.trip-cost small{grid-column:1 / -1;color:#7a8782;font-size:11px}.trip-notes{background:#f6f8f5;border-radius:9px;padding:11px 13px;margin-top:16px;font-size:12px}.trip-notes ul{margin:7px 0 0;padding-left:17px;color:#66736e}.trip-questions{background:#fff5ed}.trip-modal textarea{min-height:105px}
+      @media(max-width:700px){.welcome-actions{width:100%;flex-wrap:wrap}.welcome-actions button{flex:1}.trip-modal{max-height:88vh;overflow:auto}}
+    </style>
   </head>
   <body>
     <div class="app-shell">
@@ -55,7 +59,10 @@
               <h1>Good morning, Alex <span>✦</span></h1>
               <p class="subheading">Here’s how things are looking for your trip.</p>
             </div>
-            <button class="primary-button" id="new-expense-button"><span>＋</span> Add expense</button>
+            <div class="welcome-actions">
+              <button class="secondary-button" id="plan-trip-button"><span>✦</span> Plan trip</button>
+              <button class="primary-button" id="new-expense-button"><span>＋</span> Add expense</button>
+            </div>
           </section>
 
           <section class="stats-grid" aria-label="Trip summary">
@@ -156,6 +163,25 @@
           <p class="form-error" id="form-error" role="alert"></p>
         </form>
         <div class="analysis-result" id="analysis-result" aria-live="polite"></div>
+      </section>
+    </div>
+    <div class="modal-backdrop" id="trip-modal" aria-hidden="true">
+      <section class="modal trip-modal" role="dialog" aria-modal="true" aria-labelledby="trip-modal-title">
+        <button class="modal-close" id="close-trip-modal" aria-label="Close">×</button>
+        <div class="modal-kicker">TRIP PLANNER</div>
+        <h2 id="trip-modal-title">How much should this trip cost?</h2>
+        <p class="modal-subtitle">Describe the itinerary and Nemotron will estimate the budget and a fair split.</p>
+        <form id="trip-form">
+          <label class="field-label" for="trip-description">Trip details</label>
+          <textarea id="trip-description" required placeholder="Four days in Lisbon: flights are booked, 3 nights in an apartment, airport transfers, dinners out, and a day trip to Sintra."></textarea>
+          <div class="form-grid">
+            <div><label class="field-label" for="trip-currency">Currency</label><select id="trip-currency"><option>USD</option><option>EUR</option><option>GBP</option><option>CAD</option></select></div>
+            <div><label class="field-label" for="trip-members">Group members</label><input id="trip-members" value="Alex, Sam, Priya, Leo" required /></div>
+          </div>
+          <button class="primary-button modal-submit" type="submit"><span>✦</span> Estimate trip budget</button>
+          <p class="form-error" id="trip-form-error" role="alert"></p>
+        </form>
+        <div class="trip-analysis-result" id="trip-analysis-result" aria-live="polite"></div>
       </section>
     </div>
     <script src="app.js"></script>

@@ -1,4 +1,5 @@
 from split_logic import classify_expense, compute_split
+import app as app_module
 from app import app
 
 
@@ -68,3 +69,32 @@ def test_compute_split_uses_equal_split_for_group():
     assert result["breakdown"]["Alex"] == 40.0
     assert result["breakdown"]["Sam"] == 40.0
     assert result["breakdown"]["Priya"] == 40.0
+
+
+def test_trip_analysis_route_returns_nemotron_budget(monkeypatch):
+    monkeypatch.setattr(
+        app_module,
+        "analyze_trip_with_nemotron",
+        lambda trip_text, group, currency: {
+            "currency": currency,
+            "estimated_total": 1200,
+            "per_person": 400,
+            "confidence": "medium",
+            "cost_breakdown": [{"item": "lodging", "amount": 1200, "assumption": "Three nights"}],
+            "split_method": "equal",
+            "split": {person: 400 for person in group},
+            "assumptions": ["Shared apartment"],
+            "questions": [],
+        },
+    )
+
+    client = app.test_client()
+    response = client.post(
+        "/trip-analysis?trip=Three%20nights%20in%20Lisbon&currency=EUR&group=Alex&group=Sam&group=Priya"
+    )
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["source"] == "Nemotron"
+    assert data["estimated_total"] == 1200
+    assert data["split"]["Sam"] == 400
