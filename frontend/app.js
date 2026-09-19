@@ -26,6 +26,43 @@ const balanceData = [
   { name: "Leo Wong", initials: "LW", color: "avatar-blue", balance: 124.8, type: "owes" }
 ];
 
+const notificationData = [
+  {
+    id: "expense-airport-transfer",
+    type: "expense",
+    title: "New expense added",
+    message: "Priya added Airport transfer for $62.50.",
+    time: "2 hours ago",
+    route: "expenses"
+  },
+  {
+    id: "settlement-sam-alex",
+    type: "settlement",
+    title: "Payment recorded",
+    message: "Sam settled $48.60 with Alex.",
+    time: "Yesterday",
+    route: "balances"
+  },
+  {
+    id: "expense-dinner-review",
+    type: "expense",
+    title: "Expense needs review",
+    message: "Dinner at Nonna's still needs its split reviewed.",
+    time: "Yesterday",
+    route: "expenses"
+  },
+  {
+    id: "settlement-leo-balance",
+    type: "settlement",
+    title: "Balance updated",
+    message: "Leo now owes $124.80.",
+    time: "Sep 17",
+    route: "balances"
+  }
+];
+
+const notificationReadStorageKey = "splitSenseReadNotifications";
+
 const settingsDefaults = {
   workspaceName: "Alpine trip",
   defaultCurrency: "USD",
@@ -91,6 +128,7 @@ function getCurrentRoute() {
 function renderRoute() {
   const route = getCurrentRoute();
 
+  closeNotificationPanel();
   closeModal();
   closeTripModal();
 
@@ -255,6 +293,169 @@ function readSettings() {
   }
 }
 
+function getDefaultReadNotificationIds() {
+  return notificationData.filter((_, index) => index >= 2).map((notification) => notification.id);
+}
+
+function readNotificationIds() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(notificationReadStorageKey) || "null");
+    if (Array.isArray(saved)) {
+      const normalized = saved
+        .filter((value) => typeof value === "string" || typeof value === "number")
+        .map((value) => String(value));
+      const unique = [...new Set(normalized)];
+      return unique;
+    }
+
+    const defaults = getDefaultReadNotificationIds();
+    saveReadNotificationIds(defaults);
+    return defaults;
+  } catch {
+    const defaults = getDefaultReadNotificationIds();
+    saveReadNotificationIds(defaults);
+    return defaults;
+  }
+}
+
+function saveReadNotificationIds(ids) {
+  try {
+    const normalized = Array.isArray(ids)
+      ? [...new Set(ids.filter((value) => value !== null && value !== undefined).map((value) => String(value)))]
+      : [];
+    localStorage.setItem(notificationReadStorageKey, JSON.stringify(normalized));
+  } catch {
+    // Ignore storage write failures.
+  }
+}
+
+function getVisibleNotifications() {
+  const settings = readSettings();
+
+  return notificationData.filter((notification) => {
+    if (notification.type === "expense" && !settings.expenseNotifications) {
+      return false;
+    }
+
+    if (notification.type === "settlement" && !settings.settlementNotifications) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
+function getUnreadNotifications() {
+  const readIds = new Set(readNotificationIds());
+  return getVisibleNotifications().filter((notification) => !readIds.has(notification.id));
+}
+
+function markNotificationRead(id) {
+  const readIds = readNotificationIds();
+  if (readIds.includes(id)) {
+    renderNotifications();
+    updateNotificationBadge();
+    return;
+  }
+
+  saveReadNotificationIds([...readIds, id]);
+  renderNotifications();
+  updateNotificationBadge();
+}
+
+function markAllNotificationsRead() {
+  const visibleIds = getVisibleNotifications().map((notification) => notification.id);
+  const readIds = new Set(readNotificationIds());
+  const nextIds = [...new Set([...readIds, ...visibleIds])];
+  saveReadNotificationIds(nextIds);
+  renderNotifications();
+  updateNotificationBadge();
+}
+
+function updateNotificationBadge() {
+  const button = document.querySelector("#notification-button");
+  const dot = document.querySelector("#notification-dot");
+  const unreadNotifications = getUnreadNotifications();
+  const unreadCount = unreadNotifications.length;
+
+  if (!button || !dot) return;
+
+  const hasUnread = unreadCount > 0;
+  dot.hidden = !hasUnread;
+  button.setAttribute("aria-label", hasUnread ? `Notifications, ${unreadCount} unread` : "Notifications, no unread notifications");
+
+  const markAllButton = document.querySelector("[data-mark-all-read]");
+  if (markAllButton) {
+    markAllButton.disabled = !hasUnread;
+  }
+}
+
+function renderNotifications() {
+  const list = document.querySelector("#notification-list");
+  if (!list) return;
+
+  const visibleNotifications = getVisibleNotifications();
+  const readIds = new Set(readNotificationIds());
+
+  if (!visibleNotifications.length) {
+    list.innerHTML = `
+      <div class="notification-empty">
+        <strong>You’re all caught up.</strong>
+        <span>New group activity will appear here.</span>
+      </div>
+    `;
+    updateNotificationBadge();
+    return;
+  }
+
+  list.innerHTML = visibleNotifications.map((notification) => {
+    const isUnread = !readIds.has(notification.id);
+    const typeClass = notification.type === "expense" ? "expense" : "settlement";
+    const icon = notification.type === "expense" ? "↗" : "◌";
+
+    return `
+      <button
+        type="button"
+        class="notification-item ${isUnread ? "unread" : ""}"
+        data-notification-id="${escapeHTML(notification.id)}"
+        data-notification-route="${escapeHTML(notification.route)}"
+      >
+        <span class="notification-type-icon ${typeClass}" aria-hidden="true">${icon}</span>
+        <div class="notification-copy">
+          <div class="notification-head">
+            <strong>${escapeHTML(notification.title)}</strong>
+            ${isUnread ? '<span class="notification-unread-indicator" aria-hidden="true"></span>' : ""}
+          </div>
+          <p>${escapeHTML(notification.message)}</p>
+          <span class="notification-time">${escapeHTML(notification.time)}</span>
+        </div>
+      </button>
+    `;
+  }).join("");
+
+  updateNotificationBadge();
+}
+
+function toggleNotificationPanel(forceOpen) {
+  const button = document.querySelector("#notification-button");
+  const panel = document.querySelector("#notification-panel");
+
+  if (!button || !panel) return;
+
+  const shouldOpen = typeof forceOpen === "boolean" ? forceOpen : button.getAttribute("aria-expanded") !== "true";
+  button.setAttribute("aria-expanded", String(shouldOpen));
+  panel.hidden = !shouldOpen;
+
+  if (shouldOpen) {
+    renderNotifications();
+    closeWorkspaceMenu();
+  }
+}
+
+function closeNotificationPanel() {
+  toggleNotificationPanel(false);
+}
+
 function renderSettingsPage() {
   const grid = document.querySelector("#settings-grid");
   if (!grid) return;
@@ -309,11 +510,18 @@ function updateSettingsStorage(changes) {
   const next = { ...settings, ...changes };
   localStorage.setItem("splitSenseSettings", JSON.stringify(next));
   renderSettingsPage();
+  renderNotifications();
+  updateNotificationBadge();
 }
 
 function toggleWorkspaceMenu(forceOpen) {
   if (!workspaceSelector || !workspaceMenu) return;
   const shouldOpen = typeof forceOpen === "boolean" ? forceOpen : workspaceSelector.getAttribute("aria-expanded") !== "true";
+
+  if (shouldOpen) {
+    closeNotificationPanel();
+  }
+
   workspaceSelector.setAttribute("aria-expanded", String(shouldOpen));
   workspaceMenu.hidden = !shouldOpen;
   workspaceSelector.setAttribute("aria-label", shouldOpen ? "Close workspace menu" : "Open workspace menu");
@@ -356,8 +564,37 @@ function closeTripModal() {
 }
 
 document.addEventListener("click", (event) => {
+  const notificationButton = event.target.closest("#notification-button");
+  if (notificationButton) {
+    event.stopPropagation();
+    const panel = document.querySelector("#notification-panel");
+    const isOpen = panel && !panel.hidden;
+    toggleNotificationPanel(!isOpen);
+    return;
+  }
+
+  const notificationItem = event.target.closest(".notification-item");
+  if (notificationItem) {
+    const { notificationId, notificationRoute } = notificationItem.dataset;
+    if (notificationId) {
+      markNotificationRead(notificationId);
+      if (notificationRoute) {
+        window.location.hash = notificationRoute;
+      }
+    }
+    closeNotificationPanel();
+    return;
+  }
+
+  const markAllReadButton = event.target.closest("[data-mark-all-read]");
+  if (markAllReadButton) {
+    markAllNotificationsRead();
+    return;
+  }
+
   const openExpenseButton = event.target.closest("[data-open-expense]");
   if (openExpenseButton) {
+    closeNotificationPanel();
     openModal();
     return;
   }
@@ -385,11 +622,18 @@ document.addEventListener("click", (event) => {
     closeWorkspaceMenu();
   }
 
+  const panel = document.querySelector("#notification-panel");
+  const button = document.querySelector("#notification-button");
+  if (panel && button && !panel.contains(event.target) && !button.contains(event.target)) {
+    closeNotificationPanel();
+  }
+
   const filterButton = event.target.closest("[data-filter]");
   if (filterButton) {
     currentExpenseFilter = filterButton.dataset.filter || "all";
-    document.querySelectorAll(".filter-chip").forEach((button) => button.classList.toggle("active", button === filterButton));
+    document.querySelectorAll(".filter-chip").forEach((buttonEl) => buttonEl.classList.toggle("active", buttonEl === filterButton));
     renderExpensePage();
+    closeNotificationPanel();
     return;
   }
 
@@ -403,6 +647,11 @@ document.addEventListener("click", (event) => {
   if (inviteButton) {
     window.alert("Invitation flow is not implemented yet.");
     return;
+  }
+
+  const routeLink = event.target.closest("[data-route]");
+  if (routeLink) {
+    closeNotificationPanel();
   }
 
   const placeholderAction = event.target.closest("[data-placeholder-action]");
@@ -426,6 +675,7 @@ document.addEventListener("input", (event) => {
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     closeWorkspaceMenu();
+    closeNotificationPanel();
     closeModal();
     closeTripModal();
   }
@@ -549,4 +799,6 @@ renderExpensePage();
 renderBalancesPage();
 renderMembersPage();
 renderSettingsPage();
+renderNotifications();
+updateNotificationBadge();
 renderRoute();

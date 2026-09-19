@@ -1,246 +1,428 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f6f8f5" />
-    <title>Split Sense — Fair splits, without the guesswork</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css" />
-    <style>
-      .welcome-actions{display:flex;gap:10px;align-items:center}.trip-modal{max-width:620px}.trip-analysis-result{display:none;margin-top:20px}.trip-analysis-result.show{display:block}.trip-total{background:#eef8f3;border-radius:12px;padding:16px;margin-bottom:10px}.trip-total span,.trip-per-person span{display:block;color:#66736e;font-size:12px}.trip-total strong,.trip-per-person strong{display:block;font:700 30px "Space Grotesk";margin:4px 0}.trip-total small{color:#6a8879;text-transform:capitalize}.trip-per-person{border:1px solid #e8ece8;border-radius:10px;padding:12px 14px;margin-bottom:18px}.trip-per-person strong{font-size:22px}.trip-analysis-result h3{font:700 13px "Space Grotesk";margin:17px 0 9px}.trip-cost{display:grid;grid-template-columns:1fr auto;gap:3px 12px;border-bottom:1px solid #e8ece8;padding:9px 0}.trip-cost small{grid-column:1 / -1;color:#7a8782;font-size:11px}.trip-notes{background:#f6f8f5;border-radius:9px;padding:11px 13px;margin-top:16px;font-size:12px}.trip-notes ul{margin:7px 0 0;padding-left:17px;color:#66736e}.trip-questions{background:#fff5ed}.trip-modal textarea{min-height:105px}
-      @media(max-width:700px){.welcome-actions{width:100%;flex-wrap:wrap}.welcome-actions button{flex:1}.trip-modal{max-height:88vh;overflow:auto}}
-    </style>
-  </head>
-  <body>
-    <div class="app-shell">
-      <aside class="sidebar">
-        <a class="brand" href="#overview" aria-label="Split Sense home">
-          <span class="brand-mark"><span></span><span></span><span></span></span>
-          <span>split<span>sense</span></span>
-        </a>
-        <div class="workspace-switcher-wrap">
-          <button class="workspace-switcher" id="workspace-selector" type="button" aria-expanded="false" aria-controls="workspace-menu" aria-haspopup="menu" aria-label="Open workspace menu">
-            <span class="avatar avatar-indigo">AT</span>
-            <span><strong>Alpine trip</strong><small>4 members</small></span>
-            <span class="workspace-chevron" aria-hidden="true">⌄</span>
-          </button>
-          <div class="workspace-menu" id="workspace-menu" role="menu" aria-label="Workspace menu" hidden>
-            <div class="workspace-menu-body" role="none">
-              <button type="button" class="workspace-option is-current" role="menuitem" aria-current="true">
-                <span class="avatar avatar-indigo">AT</span>
-                <span><strong>Alpine trip</strong><small>4 members</small></span>
-                <span class="workspace-check" aria-hidden="true">✓</span>
-              </button>
-            </div>
-            <button type="button" class="workspace-action" data-action="add-group" role="menuitem">+ Add a new group</button>
-            <div class="workspace-menu-status" id="workspace-menu-status" aria-live="polite"></div>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f6f8f5" />
+  <title>Split Sense — Fair splits, without the guesswork</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .welcome-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center
+    }
+
+    .trip-modal {
+      max-width: 620px
+    }
+
+    .trip-analysis-result {
+      display: none;
+      margin-top: 20px
+    }
+
+    .trip-analysis-result.show {
+      display: block
+    }
+
+    .trip-total {
+      background: #eef8f3;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 10px
+    }
+
+    .trip-total span,
+    .trip-per-person span {
+      display: block;
+      color: #66736e;
+      font-size: 12px
+    }
+
+    .trip-total strong,
+    .trip-per-person strong {
+      display: block;
+      font: 700 30px "Space Grotesk";
+      margin: 4px 0
+    }
+
+    .trip-total small {
+      color: #6a8879;
+      text-transform: capitalize
+    }
+
+    .trip-per-person {
+      border: 1px solid #e8ece8;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 18px
+    }
+
+    .trip-per-person strong {
+      font-size: 22px
+    }
+
+    .trip-analysis-result h3 {
+      font: 700 13px "Space Grotesk";
+      margin: 17px 0 9px
+    }
+
+    .trip-cost {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 3px 12px;
+      border-bottom: 1px solid #e8ece8;
+      padding: 9px 0
+    }
+
+    .trip-cost small {
+      grid-column: 1 / -1;
+      color: #7a8782;
+      font-size: 11px
+    }
+
+    .trip-notes {
+      background: #f6f8f5;
+      border-radius: 9px;
+      padding: 11px 13px;
+      margin-top: 16px;
+      font-size: 12px
+    }
+
+    .trip-notes ul {
+      margin: 7px 0 0;
+      padding-left: 17px;
+      color: #66736e
+    }
+
+    .trip-questions {
+      background: #fff5ed
+    }
+
+    .trip-modal textarea {
+      min-height: 105px
+    }
+
+    @media(max-width:700px) {
+      .welcome-actions {
+        width: 100%;
+        flex-wrap: wrap
+      }
+
+      .welcome-actions button {
+        flex: 1
+      }
+
+      .trip-modal {
+        max-height: 88vh;
+        overflow: auto
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#overview" aria-label="Split Sense home">
+        <span class="brand-mark"><span></span><span></span><span></span></span>
+        <span>split<span>sense</span></span>
+      </a>
+      <div class="workspace-switcher-wrap">
+        <button class="workspace-switcher" id="workspace-selector" type="button" aria-expanded="false"
+          aria-controls="workspace-menu" aria-haspopup="menu" aria-label="Open workspace menu">
+          <span class="avatar avatar-indigo">AT</span>
+          <span><strong>Alpine trip</strong><small>4 members</small></span>
+          <span class="workspace-chevron" aria-hidden="true">⌄</span>
+        </button>
+        <div class="workspace-menu" id="workspace-menu" role="menu" aria-label="Workspace menu" hidden>
+          <div class="workspace-menu-body" role="none">
+            <button type="button" class="workspace-option is-current" role="menuitem" aria-current="true">
+              <span class="avatar avatar-indigo">AT</span>
+              <span><strong>Alpine trip</strong><small>4 members</small></span>
+              <span class="workspace-check" aria-hidden="true">✓</span>
+            </button>
           </div>
+          <button type="button" class="workspace-action" data-action="add-group" role="menuitem">+ Add a new
+            group</button>
+          <div class="workspace-menu-status" id="workspace-menu-status" aria-live="polite"></div>
         </div>
-        <nav class="main-nav" aria-label="Main navigation">
-          <a class="active" href="#overview" data-route="overview"><span>◈</span> Overview</a>
-          <a href="#expenses" data-route="expenses"><span>↗</span> Expenses <b>8</b></a>
-          <a href="#balances" data-route="balances"><span>⊙</span> Balances</a>
-          <a href="#members" data-route="members"><span>♧</span> Members</a>
-          <a href="#settings" data-route="settings"><span>⚙</span> Settings</a>
-        </nav>
-        <div class="sidebar-bottom">
-          <div class="user-profile">
-            <span class="avatar avatar-coral">AT</span>
-            <span><strong>Alex Thompson</strong><small>alex@email.com</small></span>
-            <span class="more">•••</span>
-          </div>
+      </div>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a class="active" href="#overview" data-route="overview"><span>◈</span> Overview</a>
+        <a href="#expenses" data-route="expenses"><span>↗</span> Expenses <b>8</b></a>
+        <a href="#balances" data-route="balances"><span>⊙</span> Balances</a>
+        <a href="#members" data-route="members"><span>♧</span> Members</a>
+        <a href="#settings" data-route="settings"><span>⚙</span> Settings</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="user-profile">
+          <span class="avatar avatar-coral">AT</span>
+          <span><strong>Alex Thompson</strong><small>alex@email.com</small></span>
+          <span class="more">•••</span>
         </div>
-      </aside>
+      </div>
+    </aside>
 
-      <main class="main-content">
-        <header class="topbar">
-          <div class="breadcrumb"><span>Workspaces</span><i>/</i><strong>Alpine trip</strong></div>
-          <div class="topbar-actions">
-            <button class="icon-button" aria-label="Notifications">♢<em></em></button>
-            <button class="avatar avatar-coral mini" aria-label="Open profile">AT</button>
+    <main class="main-content">
+      <header class="topbar">
+        <div class="breadcrumb"><span>Workspaces</span><i>/</i><strong>Alpine trip</strong></div>
+        <div class="topbar-actions">
+          <div class="notification-wrap">
+            <button class="icon-button" id="notification-button" type="button"
+              aria-label="Notifications, no unread notifications" aria-haspopup="dialog" aria-expanded="false"
+              aria-controls="notification-panel">
+              <span aria-hidden="true">♢</span>
+              <span class="notification-dot" id="notification-dot" aria-hidden="true" hidden></span>
+            </button>
+
+            <section class="notification-panel" id="notification-panel" role="dialog"
+              aria-labelledby="notification-title" hidden>
+              <div class="notification-panel-header">
+                <div>
+                  <h2 id="notification-title">Notifications</h2>
+                  <p id="notification-summary">Recent group activity</p>
+                </div>
+
+                <button type="button" class="mark-all-read" data-mark-all-read>
+                  Mark all as read
+                </button>
+              </div>
+
+              <div class="notification-list" id="notification-list" aria-live="polite"></div>
+            </section>
           </div>
-        </header>
+          <button class="avatar avatar-coral mini" aria-label="Open profile">AT</button>
+        </div>
+      </header>
 
-        <div class="content-wrap" id="app-view">
-          <section class="page-section" data-page="overview">
-            <div class="welcome-row">
-              <div>
-                <p class="eyebrow">Sunday, September 19, 2026</p>
-                <h1>Good morning, Alex <span>✦</span></h1>
-                <p class="subheading">Here’s how things are looking for your trip.</p>
-              </div>
-              <div class="welcome-actions">
-                <button class="secondary-button" id="plan-trip-button" type="button"><span>✦</span> Plan trip</button>
-                <button class="primary-button" type="button" data-open-expense><span>＋</span> Add expense</button>
-              </div>
+      <div class="content-wrap" id="app-view">
+        <section class="page-section" data-page="overview">
+          <div class="welcome-row">
+            <div>
+              <p class="eyebrow">Sunday, September 19, 2026</p>
+              <h1>Good morning, Alex <span>✦</span></h1>
+              <p class="subheading">Here’s how things are looking for your trip.</p>
             </div>
-
-            <section class="stats-grid" aria-label="Trip summary">
-              <article class="stat-card accent-green">
-                <div class="stat-icon">↗</div>
-                <div class="stat-label">You are owed</div>
-                <div class="stat-value">$186.40</div>
-                <div class="stat-foot positive">↑ $42.20 <span>this week</span></div>
-              </article>
-              <article class="stat-card accent-peach">
-                <div class="stat-icon">↘</div>
-                <div class="stat-label">You owe</div>
-                <div class="stat-value">$74.15</div>
-                <div class="stat-foot negative">↓ $12.80 <span>this week</span></div>
-              </article>
-              <article class="stat-card accent-blue">
-                <div class="stat-icon">◷</div>
-                <div class="stat-label">Trip spending</div>
-                <div class="stat-value">$1,248.62</div>
-                <div class="stat-foot neutral">8 expenses <span>since Sep 14</span></div>
-              </article>
-            </section>
-
-            <section class="dashboard-grid">
-              <article class="panel expenses-panel">
-                <div class="panel-heading">
-                  <div><h2>Recent expenses</h2><p>Your group’s latest activity</p></div>
-                  <a class="text-button" href="#expenses" data-route-target="expenses">View all <span>→</span></a>
-                </div>
-                <div class="expense-list" id="overview-expense-list"></div>
-              </article>
-
-              <article class="panel balance-panel">
-                <div class="panel-heading"><div><h2>Balances</h2><p>Who owes who</p></div><button type="button" class="dots-button" aria-label="Balance options">•••</button></div>
-                <div class="balance-total"><span>Total group spend</span><strong>$1,248.62</strong></div>
-                <div class="progress-track"><span></span></div>
-                <div id="overview-balance-list"></div>
-                <a class="settle-button" href="#balances" data-route-target="balances">Settle up <span>→</span></a>
-              </article>
-            </section>
-
-            <section class="insight-card">
-              <div class="insight-sparkle">✦</div>
-              <div><strong>Smart insight</strong><p>Sam hasn’t been included in the last 2 food expenses. Want to check if they’re joining dinner tonight?</p></div>
-              <button class="secondary-button" type="button" data-open-expense>Review expense <span>→</span></button>
-              <button class="close-insight" aria-label="Dismiss insight" type="button">×</button>
-            </section>
-
-            <section class="bottom-grid">
-              <article class="panel spending-panel">
-                <div class="panel-heading"><div><h2>Spending by category</h2><p>Across all trip expenses</p></div><button class="select-button" type="button">This trip⌄</button></div>
-                <div class="chart-wrap">
-                  <div class="donut-chart"><div><strong>$1.2k</strong><small>total</small></div></div>
-                  <div class="legend"><div><i class="dot food-dot"></i>Food <b>$462.40</b></div><div><i class="dot transport-dot"></i>Transport <b>$126.50</b></div><div><i class="dot lodging-dot"></i>Lodging <b>$540.00</b></div><div><i class="dot misc-dot"></i>Other <b>$119.72</b></div></div>
-                </div>
-              </article>
-              <article class="panel members-panel">
-                <div class="panel-heading"><div><h2>Trip members <span class="count-pill">4</span></h2><p>Everyone in Alpine trip</p></div><a class="text-button" href="#members" data-route-target="members">Manage <span>→</span></a></div>
-                <div class="member-list" id="overview-member-list"></div>
-              </article>
-            </section>
-          </section>
-
-          <section class="page-section" data-page="expenses" hidden>
-            <div class="view-header">
-              <div>
-                <p class="eyebrow">Trip activity</p>
-                <h2>Expenses</h2>
-              </div>
+            <div class="welcome-actions">
+              <button class="secondary-button" id="plan-trip-button" type="button"><span>✦</span> Plan trip</button>
               <button class="primary-button" type="button" data-open-expense><span>＋</span> Add expense</button>
             </div>
-            <div class="panel">
-              <div class="toolbar">
-                <label class="search-field" aria-label="Search expenses">
-                  <span>⌕</span>
-                  <input id="expense-search" type="search" placeholder="Search expenses" />
-                </label>
-                <div class="filter-group" aria-label="Expense filters">
-                  <button type="button" class="filter-chip active" data-filter="all">All</button>
-                  <button type="button" class="filter-chip" data-filter="settled">Settled</button>
-                  <button type="button" class="filter-chip" data-filter="pending">Pending</button>
-                  <button type="button" class="filter-chip" data-filter="review">Review</button>
+          </div>
+
+          <section class="stats-grid" aria-label="Trip summary">
+            <article class="stat-card accent-green">
+              <div class="stat-icon">↗</div>
+              <div class="stat-label">You are owed</div>
+              <div class="stat-value">$186.40</div>
+              <div class="stat-foot positive">↑ $42.20 <span>this week</span></div>
+            </article>
+            <article class="stat-card accent-peach">
+              <div class="stat-icon">↘</div>
+              <div class="stat-label">You owe</div>
+              <div class="stat-value">$74.15</div>
+              <div class="stat-foot negative">↓ $12.80 <span>this week</span></div>
+            </article>
+            <article class="stat-card accent-blue">
+              <div class="stat-icon">◷</div>
+              <div class="stat-label">Trip spending</div>
+              <div class="stat-value">$1,248.62</div>
+              <div class="stat-foot neutral">8 expenses <span>since Sep 14</span></div>
+            </article>
+          </section>
+
+          <section class="dashboard-grid">
+            <article class="panel expenses-panel">
+              <div class="panel-heading">
+                <div>
+                  <h2>Recent expenses</h2>
+                  <p>Your group’s latest activity</p>
+                </div>
+                <a class="text-button" href="#expenses" data-route-target="expenses">View all <span>→</span></a>
+              </div>
+              <div class="expense-list" id="overview-expense-list"></div>
+            </article>
+
+            <article class="panel balance-panel">
+              <div class="panel-heading">
+                <div>
+                  <h2>Balances</h2>
+                  <p>Who owes who</p>
+                </div><button type="button" class="dots-button" aria-label="Balance options">•••</button>
+              </div>
+              <div class="balance-total"><span>Total group spend</span><strong>$1,248.62</strong></div>
+              <div class="progress-track"><span></span></div>
+              <div id="overview-balance-list"></div>
+              <a class="settle-button" href="#balances" data-route-target="balances">Settle up <span>→</span></a>
+            </article>
+          </section>
+
+          <section class="insight-card">
+            <div class="insight-sparkle">✦</div>
+            <div><strong>Smart insight</strong>
+              <p>Sam hasn’t been included in the last 2 food expenses. Want to check if they’re joining dinner tonight?
+              </p>
+            </div>
+            <button class="secondary-button" type="button" data-open-expense>Review expense <span>→</span></button>
+            <button class="close-insight" aria-label="Dismiss insight" type="button">×</button>
+          </section>
+
+          <section class="bottom-grid">
+            <article class="panel spending-panel">
+              <div class="panel-heading">
+                <div>
+                  <h2>Spending by category</h2>
+                  <p>Across all trip expenses</p>
+                </div><button class="select-button" type="button">This trip⌄</button>
+              </div>
+              <div class="chart-wrap">
+                <div class="donut-chart">
+                  <div><strong>$1.2k</strong><small>total</small></div>
+                </div>
+                <div class="legend">
+                  <div><i class="dot food-dot"></i>Food <b>$462.40</b></div>
+                  <div><i class="dot transport-dot"></i>Transport <b>$126.50</b></div>
+                  <div><i class="dot lodging-dot"></i>Lodging <b>$540.00</b></div>
+                  <div><i class="dot misc-dot"></i>Other <b>$119.72</b></div>
                 </div>
               </div>
-              <div class="expense-list page-expense-list" id="expenses-list"></div>
-            </div>
-          </section>
-
-          <section class="page-section" data-page="balances" hidden>
-            <div class="view-header">
-              <div>
-                <p class="eyebrow">Money overview</p>
-                <h2>Balances</h2>
+            </article>
+            <article class="panel members-panel">
+              <div class="panel-heading">
+                <div>
+                  <h2>Trip members <span class="count-pill">4</span></h2>
+                  <p>Everyone in Alpine trip</p>
+                </div><a class="text-button" href="#members" data-route-target="members">Manage <span>→</span></a>
               </div>
-            </div>
-            <div class="stats-grid balances-summary" id="balances-summary"></div>
-            <div class="panel">
-              <div class="panel-heading"><div><h2>Member balances</h2><p>See who owes what.</p></div><button class="settle-button secondary" type="button" data-settle-up>Settle up <span>→</span></button></div>
-              <div class="balance-list" id="balances-list"></div>
-            </div>
+              <div class="member-list" id="overview-member-list"></div>
+            </article>
           </section>
+        </section>
 
-          <section class="page-section" data-page="members" hidden>
-            <div class="view-header">
-              <div>
-                <p class="eyebrow">People</p>
-                <h2>Members</h2>
-              </div>
-              <button class="primary-button" type="button" data-invite-member><span>＋</span> Invite member</button>
+        <section class="page-section" data-page="expenses" hidden>
+          <div class="view-header">
+            <div>
+              <p class="eyebrow">Trip activity</p>
+              <h2>Expenses</h2>
             </div>
-            <div class="panel member-page-panel">
-              <div class="member-summary-row">
-                <div class="summary-badge"><strong id="member-count">0</strong><span>members</span></div>
-              </div>
-              <div class="member-list member-page-list" id="members-list"></div>
-            </div>
-          </section>
-
-          <section class="page-section" data-page="settings" hidden>
-            <div class="view-header">
-              <div>
-                <p class="eyebrow">Preferences</p>
-                <h2>Settings</h2>
-              </div>
-            </div>
-            <div class="settings-grid" id="settings-grid"></div>
-          </section>
-        </div>
-      </main>
-    </div>
-
-    <div class="modal-backdrop" id="expense-modal" aria-hidden="true">
-      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-        <button class="modal-close" id="close-modal" aria-label="Close" type="button">×</button>
-        <div class="modal-kicker">NEW EXPENSE</div>
-        <h2 id="modal-title">What did you pay for?</h2>
-        <p class="modal-subtitle">Describe the expense, amount, and who was there. Nemotron will figure out the fair split.</p>
-        <form id="expense-form">
-          <label class="field-label" for="expense-description">Expense description</label>
-          <textarea id="expense-description" required placeholder="Dinner was $84. Sam wasn't there."></textarea>
-          <button class="primary-button modal-submit" type="submit"><span>✦</span> Analyze fair split</button>
-          <p class="form-error" id="form-error" role="alert"></p>
-        </form>
-        <div class="analysis-result" id="analysis-result" aria-live="polite"></div>
-      </section>
-    </div>
-    <div class="modal-backdrop" id="trip-modal" aria-hidden="true">
-      <section class="modal trip-modal" role="dialog" aria-modal="true" aria-labelledby="trip-modal-title">
-        <button class="modal-close" id="close-trip-modal" aria-label="Close" type="button">×</button>
-        <div class="modal-kicker">TRIP PLANNER</div>
-        <h2 id="trip-modal-title">How much should this trip cost?</h2>
-        <p class="modal-subtitle">Describe the itinerary and Nemotron will estimate the budget and a fair split.</p>
-        <form id="trip-form">
-          <label class="field-label" for="trip-description">Trip details</label>
-          <textarea id="trip-description" required placeholder="Four days in Lisbon: flights are booked, 3 nights in an apartment, airport transfers, dinners out, and a day trip to Sintra."></textarea>
-          <div class="form-grid">
-            <div><label class="field-label" for="trip-currency">Currency</label><select id="trip-currency"><option>USD</option><option>EUR</option><option>GBP</option><option>CAD</option></select></div>
-            <div><label class="field-label" for="trip-members">Group members</label><input id="trip-members" value="Alex, Sam, Priya, Leo" required /></div>
+            <button class="primary-button" type="button" data-open-expense><span>＋</span> Add expense</button>
           </div>
-          <button class="primary-button modal-submit" type="submit"><span>✦</span> Estimate trip budget</button>
-          <p class="form-error" id="trip-form-error" role="alert"></p>
-        </form>
-        <div class="trip-analysis-result" id="trip-analysis-result" aria-live="polite"></div>
-      </section>
-    </div>
-    <script src="app.js"></script>
-  </body>
+          <div class="panel">
+            <div class="toolbar">
+              <label class="search-field" aria-label="Search expenses">
+                <span>⌕</span>
+                <input id="expense-search" type="search" placeholder="Search expenses" />
+              </label>
+              <div class="filter-group" aria-label="Expense filters">
+                <button type="button" class="filter-chip active" data-filter="all">All</button>
+                <button type="button" class="filter-chip" data-filter="settled">Settled</button>
+                <button type="button" class="filter-chip" data-filter="pending">Pending</button>
+                <button type="button" class="filter-chip" data-filter="review">Review</button>
+              </div>
+            </div>
+            <div class="expense-list page-expense-list" id="expenses-list"></div>
+          </div>
+        </section>
+
+        <section class="page-section" data-page="balances" hidden>
+          <div class="view-header">
+            <div>
+              <p class="eyebrow">Money overview</p>
+              <h2>Balances</h2>
+            </div>
+          </div>
+          <div class="stats-grid balances-summary" id="balances-summary"></div>
+          <div class="panel">
+            <div class="panel-heading">
+              <div>
+                <h2>Member balances</h2>
+                <p>See who owes what.</p>
+              </div><button class="settle-button secondary" type="button" data-settle-up>Settle up
+                <span>→</span></button>
+            </div>
+            <div class="balance-list" id="balances-list"></div>
+          </div>
+        </section>
+
+        <section class="page-section" data-page="members" hidden>
+          <div class="view-header">
+            <div>
+              <p class="eyebrow">People</p>
+              <h2>Members</h2>
+            </div>
+            <button class="primary-button" type="button" data-invite-member><span>＋</span> Invite member</button>
+          </div>
+          <div class="panel member-page-panel">
+            <div class="member-summary-row">
+              <div class="summary-badge"><strong id="member-count">0</strong><span>members</span></div>
+            </div>
+            <div class="member-list member-page-list" id="members-list"></div>
+          </div>
+        </section>
+
+        <section class="page-section" data-page="settings" hidden>
+          <div class="view-header">
+            <div>
+              <p class="eyebrow">Preferences</p>
+              <h2>Settings</h2>
+            </div>
+          </div>
+          <div class="settings-grid" id="settings-grid"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="expense-modal" aria-hidden="true">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <button class="modal-close" id="close-modal" aria-label="Close" type="button">×</button>
+      <div class="modal-kicker">NEW EXPENSE</div>
+      <h2 id="modal-title">What did you pay for?</h2>
+      <p class="modal-subtitle">Describe the expense, amount, and who was there. Nemotron will figure out the fair
+        split.</p>
+      <form id="expense-form">
+        <label class="field-label" for="expense-description">Expense description</label>
+        <textarea id="expense-description" required placeholder="Dinner was $84. Sam wasn't there."></textarea>
+        <button class="primary-button modal-submit" type="submit"><span>✦</span> Analyze fair split</button>
+        <p class="form-error" id="form-error" role="alert"></p>
+      </form>
+      <div class="analysis-result" id="analysis-result" aria-live="polite"></div>
+    </section>
+  </div>
+  <div class="modal-backdrop" id="trip-modal" aria-hidden="true">
+    <section class="modal trip-modal" role="dialog" aria-modal="true" aria-labelledby="trip-modal-title">
+      <button class="modal-close" id="close-trip-modal" aria-label="Close" type="button">×</button>
+      <div class="modal-kicker">TRIP PLANNER</div>
+      <h2 id="trip-modal-title">How much should this trip cost?</h2>
+      <p class="modal-subtitle">Describe the itinerary and Nemotron will estimate the budget and a fair split.</p>
+      <form id="trip-form">
+        <label class="field-label" for="trip-description">Trip details</label>
+        <textarea id="trip-description" required
+          placeholder="Four days in Lisbon: flights are booked, 3 nights in an apartment, airport transfers, dinners out, and a day trip to Sintra."></textarea>
+        <div class="form-grid">
+          <div><label class="field-label" for="trip-currency">Currency</label><select id="trip-currency">
+              <option>USD</option>
+              <option>EUR</option>
+              <option>GBP</option>
+              <option>CAD</option>
+            </select></div>
+          <div><label class="field-label" for="trip-members">Group members</label><input id="trip-members"
+              value="Alex, Sam, Priya, Leo" required /></div>
+        </div>
+        <button class="primary-button modal-submit" type="submit"><span>✦</span> Estimate trip budget</button>
+        <p class="form-error" id="trip-form-error" role="alert"></p>
+      </form>
+      <div class="trip-analysis-result" id="trip-analysis-result" aria-live="polite"></div>
+    </section>
+  </div>
+  <script src="app.js"></script>
+</body>
+
 </html>
