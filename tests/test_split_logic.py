@@ -1,4 +1,33 @@
 from split_logic import classify_expense, compute_split
+from app import app
+
+
+def test_classify_route_matches_frontend_contract():
+    client = app.test_client()
+    response = client.post(
+        "/classify?text=Paid%20%2484%20for%20dinner%20at%20Nonna's,%20Sam%20wasn't%20there&payer=Alex&group=Alex&group=Sam&group=Priya&group=Leo"
+    )
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["category"] == "food"
+    assert data["split_hint"] == "exclude_named"
+    assert "Sam" in data["participants_excluded"]
+
+
+def test_split_route_matches_frontend_contract():
+    client = app.test_client()
+    response = client.post(
+        "/split?amount=84&split_hint=exclude_named&group=Alex&group=Priya&group=Leo"
+    )
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["amount"] == 84.0
+    assert data["total"] == 84.0
+    assert data["breakdown"]["Alex"] == 28.0
+    assert data["breakdown"]["Priya"] == 28.0
+    assert data["breakdown"]["Leo"] == 28.0
 
 
 def test_classify_food_expense_excludes_missing_person():
