@@ -3,7 +3,15 @@ import app as app_module
 from app import app
 
 
-def test_classify_route_matches_frontend_contract():
+def test_classify_route_matches_frontend_contract(monkeypatch):
+    monkeypatch.setattr(app_module, "classify_expense_with_nemotron", lambda expense_text, group, payer: {
+        "category": "food",
+        "amount_confidence": "high",
+        "participants_included": ["Alex", "Priya", "Leo"],
+        "participants_excluded": ["Sam"],
+        "split_hint": "exclude_named",
+        "ambiguity_flags": [],
+    })
     client = app.test_client()
     response = client.post(
         "/classify?text=Paid%20%2484%20for%20dinner%20at%20Nonna's,%20Sam%20wasn't%20there&payer=Alex&group=Alex&group=Sam&group=Priya&group=Leo"
@@ -14,6 +22,7 @@ def test_classify_route_matches_frontend_contract():
     assert data["category"] == "food"
     assert data["split_hint"] == "exclude_named"
     assert "Sam" in data["participants_excluded"]
+    assert data["participants_included"] == ["Alex", "Priya", "Leo"]
 
 
 def test_split_route_matches_frontend_contract():

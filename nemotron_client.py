@@ -124,6 +124,37 @@ def call_nemotron(messages: list[dict[str, str]], model: Optional[str] = None, m
     raise RuntimeError("No Nemotron model candidates configured")
 
 
+def classify_expense_with_nemotron(expense_text: str, group: list[str], payer: str) -> Dict[str, Any]:
+    prompt = f"""
+Classify this shared expense and decide exactly who should split it.
+
+Group members: {', '.join(group)}
+Payer: {payer}
+Expense: {expense_text}
+
+Return JSON only:
+{{
+  "category": "food | transport | lodging | misc",
+  "amount_confidence": "high | medium | low",
+  "participants_included": ["exact names from the group"],
+  "participants_excluded": ["exact names from the group"],
+  "split_hint": "equal | exclude_named",
+  "ambiguity_flags": ["..."]
+}}
+
+Rules:
+- Exclude anyone explicitly absent, not there, not attending, or opting out.
+- Include everyone else who benefited, and always include the payer.
+- Use exact names from the group list.
+- Return valid JSON with no explanation outside the object.
+"""
+    messages = [
+        {"role": "system", "content": "You are a strict expense participant classifier."},
+        {"role": "user", "content": prompt},
+    ]
+    return call_nemotron(messages, max_tokens=500)
+
+
 def analyze_trip_with_nemotron(trip_text: str, group: list[str], currency: str = "USD") -> Dict[str, Any]:
     prompt = f"""
 You are planning a shared trip budget. Estimate the money this group should set aside

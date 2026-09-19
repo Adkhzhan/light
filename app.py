@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from split_logic import classify_expense, compute_split
-from nemotron_client import analyze_trip_with_nemotron
+from nemotron_client import analyze_trip_with_nemotron, classify_expense_with_nemotron
     
 BASE_DIR = Path(__file__).resolve().parent
 FRONTEND_DIR = BASE_DIR / "frontend"
@@ -43,7 +43,23 @@ def classify_endpoint():
     if not group:
         return jsonify({"error": "At least one group member is required."}), 400
 
-    classification = classify_expense(text, group, payer or group[0])
+    payer = payer or group[0]
+    heuristic_classification = classify_expense(text, group, payer)
+    try:
+        classification = classify_expense_with_nemotron(text, group, payer)
+        if "raw_response" in classification:
+            raise ValueError("Nemotron returned an invalid expense classification")
+    except Exception:
+        classification = heuristic_classification
+
+    excluded = set(heuristic_classification["participants_excluded"])
+    excluded.update(name for name in classification.get("participants_excluded", []) if name in group)
+    included = [name for name in group if name not in excluded]
+    if payer not in included:
+        included.insert(0, payer)
+    classification["participants_excluded"] = [name for name in group if name in excluded]
+    classification["participants_included"] = included
+    classification["split_hint"] = "exclude_named" if excluded else classification.get("split_hint", "equal")
     return jsonify(classification)
 
 
