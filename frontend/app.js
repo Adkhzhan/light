@@ -32,30 +32,15 @@ const balanceData = [
   { name: "Leo Wong", initials: "LW", color: "avatar-blue", balance: 124.8, type: "owes" }
 ];
 
-const notificationData = [
-  {
-    id: "expense-airport-transfer",
-    type: "expense",
-    title: "New expense added",
-    message: "Priya added Airport transfer for $62.50.",
-    time: "2 hours ago",
-    route: "expenses"
-  },
+const settlementNotifications = [
   {
     id: "settlement-sam-alex",
     type: "settlement",
     title: "Payment recorded",
     message: "Sam settled $48.60 with Alex.",
     time: "Yesterday",
-    route: "balances"
-  },
-  {
-    id: "expense-dinner-review",
-    type: "expense",
-    title: "Expense needs review",
-    message: "Dinner at Nonna's still needs its split reviewed.",
-    time: "Yesterday",
-    route: "expenses"
+    route: "balances",
+    defaultUnread: false
   },
   {
     id: "settlement-leo-balance",
@@ -63,7 +48,8 @@ const notificationData = [
     title: "Balance updated",
     message: "Leo now owes $124.80.",
     time: "Sep 17",
-    route: "balances"
+    route: "balances",
+    defaultUnread: false
   }
 ];
 
@@ -233,6 +219,33 @@ function renderExpensePage() {
     : '<div class="empty-state">No expenses match the current search and filter.</div>';
 }
 
+function buildExpenseNotifications() {
+  return expenseData.map((expense, index) => {
+    const titleMap = {
+      review: "Expense needs review",
+      pending: "Pending expense added",
+      settled: "Expense added"
+    };
+
+    return {
+      id: `expense-${expense.id}`,
+      type: "expense",
+      title: titleMap[expense.status] || "Expense added",
+      message: `${expense.payer} added ${expense.title} for ${formatMoney(expense.amount)}.`,
+      time: expense.dateLabel,
+      route: "expenses",
+      expenseId: expense.id,
+      status: expense.status,
+      category: expense.category,
+      defaultUnread: index < 3
+    };
+  });
+}
+
+function getAllNotifications() {
+  return [...buildExpenseNotifications(), ...settlementNotifications];
+}
+
 function addExpenseToHistory(analysis, description) {
   expenseData.unshift({
     id: Date.now(),
@@ -246,6 +259,8 @@ function addExpenseToHistory(analysis, description) {
   localStorage.setItem("splitSenseExpenses", JSON.stringify(expenseData.slice(0, 50)));
   renderOverviewExpenses();
   renderExpensePage();
+  renderNotifications();
+  updateNotificationBadge();
 }
 
 function renderBalancesPage() {
@@ -322,7 +337,9 @@ function readSettings() {
 }
 
 function getDefaultReadNotificationIds() {
-  return notificationData.filter((_, index) => index >= 2).map((notification) => notification.id);
+  return getAllNotifications()
+    .filter((notification) => !notification.defaultUnread)
+    .map((notification) => notification.id);
 }
 
 function readNotificationIds() {
@@ -360,7 +377,7 @@ function saveReadNotificationIds(ids) {
 function getVisibleNotifications() {
   const settings = readSettings();
 
-  return notificationData.filter((notification) => {
+  return getAllNotifications().filter((notification) => {
     if (notification.type === "expense" && !settings.expenseNotifications) {
       return false;
     }
