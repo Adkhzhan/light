@@ -80,6 +80,7 @@ const smartInsight = document.querySelector(".insight-card");
 
 let currentExpenseFilter = "all";
 let expenseSearchText = "";
+let pendingExpense = null;
 
 function dismissSmartInsight() {
   if (!smartInsight) return;
@@ -587,6 +588,11 @@ function openModal() {
 
 function closeModal() {
   if (!modal) return;
+  pendingExpense = null;
+  if (result) {
+    result.classList.remove("show");
+    result.innerHTML = "";
+  }
   modal.classList.remove("open");
   modal.setAttribute("aria-hidden", "true");
   document.body.classList.remove("modal-open");
@@ -763,7 +769,7 @@ async function requestAnalysis(text) {
 function renderResult({ classification, split, source }) {
   const categoryLabels = { food: "Food", lodging: "Lodging", transport: "Transport", misc: "Other" };
   const people = Object.entries(split.breakdown).map(([person, value]) => `<div class="result-person"><span>${escapeHTML(person)}</span><b>$${Number(value).toFixed(2)}</b></div>`).join("");
-  result.innerHTML = `<h3>${escapeHTML(classification.summary || "Suggested split")} <span style="color:#4f9b75;font-size:10px;font-family:'DM Sans'">${source}</span></h3><div class="result-summary"><span class="result-pill">${categoryLabels[classification.category]}</span><span class="result-pill">${classification.split_hint === "equal" ? "Split equally" : "Excluded named guest"}</span><span class="result-pill">${classification.amount_confidence} confidence</span></div><div class="result-breakdown">${people}</div>`;
+  result.innerHTML = `<h3>${escapeHTML(classification.summary || "Suggested split")} <span style="color:#4f9b75;font-size:10px;font-family:'DM Sans'">${source}</span></h3><div class="result-summary"><span class="result-pill">${categoryLabels[classification.category]}</span><span class="result-pill">${classification.split_hint === "equal" ? "Split equally" : "Excluded named guest"}</span><span class="result-pill">${classification.amount_confidence} confidence</span></div><div class="result-breakdown">${people}</div><div class="analysis-actions"><button class="secondary-button" type="button" data-cancel-expense>Cancel</button><button class="primary-button" type="button" data-confirm-expense>Confirm expense</button></div>`;
   result.classList.add("show");
 }
 
@@ -796,13 +802,27 @@ if (form) {
     submit.innerHTML = "<span>◌</span> Analyzing…";
     try {
       const analysis = await requestAnalysis(text);
+      pendingExpense = { analysis, description: text };
       renderResult(analysis);
-      addExpenseToHistory(analysis, text);
     } catch (error) {
       errorMessage.textContent = error.message || "Nemotron could not analyze this expense.";
     } finally {
       submit.disabled = false;
       submit.innerHTML = "<span>✦</span> Analyze fair split";
+    }
+  });
+}
+
+if (result) {
+  result.addEventListener("click", (event) => {
+    if (event.target.closest("[data-cancel-expense]")) {
+      closeModal();
+      return;
+    }
+
+    if (event.target.closest("[data-confirm-expense]") && pendingExpense) {
+      addExpenseToHistory(pendingExpense.analysis, pendingExpense.description);
+      closeModal();
     }
   });
 }

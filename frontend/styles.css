@@ -1976,6 +1976,13 @@ body.modal-open {
   font-weight: 600;
 }
 
+.analysis-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
 @media (max-width: 700px) {
   .modal-backdrop {
     padding: 16px;
