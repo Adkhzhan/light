@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from typing import Any, Dict, List
 
 
@@ -11,8 +10,6 @@ def classify_expense(text: str, group: List[str], payer: str) -> Dict[str, Any]:
     the raw text and returns a structured result used by the rule engine.
     """
     cleaned = text.lower()
-    group_set = set(group)
-    included = [name for name in group if name != payer or "not" not in cleaned]
 
     if any(word in cleaned for word in ["dinner", "food", "groceries", "brunch", "lunch", "restaurant", "coffee", "pizza"]):
         category = "food"
