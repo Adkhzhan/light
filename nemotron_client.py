@@ -11,7 +11,6 @@ import requests
 
 
 NEMOTRON_MODEL_CANDIDATES = [
-    os.getenv("NVIDIA_MODEL", ""),
     "nvidia/nemotron-nano-3-30b-a3b",
     "nvidia/nemotron-3-super-120b-a12b",
     "nvidia/nemotron-3.5-lightning-30b-a3b",
@@ -122,64 +121,6 @@ def call_nemotron(messages: list[dict[str, str]], model: Optional[str] = None, m
     if last_error is not None:
         raise last_error
     raise RuntimeError("No Nemotron model candidates configured")
-
-
-def classify_expense_with_nemotron(expense_text: str, group: list[str], payer: str) -> Dict[str, Any]:
-    prompt = f"""
-You are classifying a shared expense for a split-bill app.
-
-Group: {', '.join(group)}
-Payer: {payer}
-Expense text: {expense_text}
-
-Return JSON only with this schema:
-{
-  "category": "food | transport | lodging | misc",
-  "amount_confidence": "high | medium | low",
-  "participants_included": ["..."],
-  "participants_excluded": ["..."],
-  "split_hint": "equal | weighted | exclude_named",
-  "ambiguity_flags": ["..."]
-}
-
-Rules:
-- If someone is explicitly not present, exclude them.
-- Keep the response valid JSON and do not add explanations outside the JSON object.
-"""
-
-    messages = [
-        {"role": "system", "content": "You are a strict JSON extraction assistant for shared-expense classification."},
-        {"role": "user", "content": prompt},
-    ]
-    result = call_nemotron(messages)
-    if "raw_response" in result:
-        return {"category": "misc", "amount_confidence": "low", "participants_included": group, "participants_excluded": [], "split_hint": "equal", "ambiguity_flags": ["nemotron_parse_failed"]}
-    return result
-
-
-def judge_split_with_nemotron(expense_text: str, group: list[str], split_result: Dict[str, Any]) -> Dict[str, Any]:
-    prompt = f"""
-Review the following expense and proposed split.
-
-Group: {', '.join(group)}
-Expense text: {expense_text}
-Proposed split: {json.dumps(split_result, default=str)}
-
-Return JSON only with this schema:
-{
-  "decision": "approve | ask-user | flag-for-review",
-  "rationale": "one sentence"
-}
-"""
-
-    messages = [
-        {"role": "system", "content": "You are a reviewer for shared-bill fairness and ambiguity."},
-        {"role": "user", "content": prompt},
-    ]
-    result = call_nemotron(messages)
-    if "raw_response" in result:
-        return {"decision": "ask-user", "rationale": "Nemotron response was not parseable; the app should ask for clarification."}
-    return result
 
 
 def analyze_trip_with_nemotron(trip_text: str, group: list[str], currency: str = "USD") -> Dict[str, Any]:
