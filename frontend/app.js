@@ -7,6 +7,7 @@ const members = [
   { name: "Priya Nair", email: "priya@email.com", role: "Savings account", initials: "PN", color: "avatar-coral" },
   { name: "Leo Wong", email: "leo@email.com", role: "Credit account", initials: "LW", color: "avatar-blue" }
 ];
+const currentUserName = "Alex Thompson";
 
 function dateDaysAgo(days) {
   const value = new Date();
@@ -35,20 +36,32 @@ function createExampleHistory() {
   for (let month = 0; month < 6; month += 1) {
     const start = month * 30;
     add(start + 1, "Rent payment", "Alex Thompson", 1250, "lodging");
-    add(start + 2, "Paycheck", "Alex Thompson", 2980, "misc", "income");
+    add(start + 2, "Paycheck", "Alex Thompson", 5960, "misc", "income");
+    add(start + 3, "Paycheck", "Sam Parker", 2140 + month * 35, "misc", "income");
     add(start + 4, "Electric bill", "Leo Wong", 86.4 + month * 3.2, "misc", "expense", "pending");
     add(start + 6, "Grocery run", "Sam Parker", 118.62 + month * 4.5, "food");
     add(start + 8, "Dining out", "Sam Parker", 72.8 + month * 2.4, "food", "expense", "review");
     add(start + 10, "Public transit", "Alex Thompson", 54.2 + month, "transport");
     add(start + 12, "Pharmacy", "Leo Wong", 38.45 + month * 1.6, "misc", "expense", "review");
     add(start + 15, "Internet bill", "Priya Nair", 68, "misc", "expense", "pending");
-    add(start + 16, "Paycheck", "Alex Thompson", 2980, "misc", "income");
+    add(start + 17, "Paycheck", "Priya Nair", 2460 + month * 25, "misc", "income");
     add(start + 18, "Household supplies", "Priya Nair", 64.3 + month * 3, "misc");
     add(start + 20, "Coffee and snacks", "Sam Parker", 31.2 + month * 1.8, "food");
     add(start + 22, "Rideshare", "Alex Thompson", 42.75 + month * 2, "transport");
     add(start + 24, "Streaming subscriptions", "Priya Nair", 42.97, "misc");
     add(start + 26, "Weekend groceries", "Sam Parker", 96.4 + month * 5, "food");
     add(start + 28, "Home supplies", "Leo Wong", 74.6 + month * 2.2, "lodging");
+    add(start + 5, "Paycheck", "Leo Wong", 2320 + month * 40, "misc", "income");
+    add(start + 7, month % 2 ? "Concert tickets" : "Movie night", "Leo Wong", month % 2 ? 128 : 46.5, "misc");
+    add(start + 9, month % 3 === 0 ? "Water bill" : "Gas bill", "Priya Nair", 38 + month * 4.75, "misc");
+    add(start + 11, month % 2 ? "Car maintenance" : "Bike repair", "Leo Wong", month % 2 ? 214.8 : 58.2, "transport");
+    add(start + 13, month % 2 ? "Takeout noodles" : "Farmers market", "Priya Nair", month % 2 ? 39.6 : 67.25, "food");
+    add(start + 14, month % 3 === 1 ? "Dental copay" : "Prescriptions", "Alex Thompson", month % 3 === 1 ? 145 : 42.75, "misc");
+    add(start + 19, month % 2 ? "Weekend hotel" : "Museum passes", "Sam Parker", month % 2 ? 186 : 54, month % 2 ? "lodging" : "misc");
+    add(start + 21, month % 3 === 2 ? "Flight deposit" : "Parking", "Alex Thompson", month % 3 === 2 ? 240 : 22, "transport");
+    add(start + 23, month % 2 ? "Birthday gift" : "Clothing", "Priya Nair", month % 2 ? 85 : 112.4, "misc");
+    add(start + 25, month % 3 === 0 ? "Meal delivery" : "Dinner reservation", "Leo Wong", month % 3 === 0 ? 61.8 : 94.3, "food");
+    add(start + 27, month % 2 ? "Furniture fund" : "Cleaning supplies", "Sam Parker", month % 2 ? 175 : 29.4, "lodging");
   }
 
   return transactions.sort((left, right) => new Date(right.date) - new Date(left.date));
@@ -118,6 +131,7 @@ const spendingReviewModal = document.querySelector("#spending-review-modal");
 const spendingReviewResult = document.querySelector("#spending-review-result");
 
 let currentExpenseFilter = "all";
+let currentTransactionType = "all";
 let expenseSearchText = "";
 let pendingExpense = null;
 let expandedExpenseId = null;
@@ -133,6 +147,32 @@ function getMemberInitials(name) {
   return member ? member.initials : name.split(" ").map((part) => part[0]).slice(0, 2).join("").toUpperCase();
 }
 
+function sameMember(left, right) {
+  return left === right || left.split(" ")[0].toLowerCase() === right.split(" ")[0].toLowerCase();
+}
+
+function getApprovalMembers(expense) {
+  const participantNames = expense.participants || members.map((member) => member.name);
+  return participantNames.filter((name) => !sameMember(name, expense.payer));
+}
+
+function getAccountBalances() {
+  return members.map((member) => {
+    const balance = expenseData.reduce((total, transaction) => {
+      if (!isRealizedCashFlow(transaction) || !sameMember(transaction.payer, member.name)) return total;
+      const amount = Number(transaction.amount) || 0;
+      return total + (transaction.kind === "income" ? amount : -amount);
+    }, 0);
+    return {
+      name: member.name,
+      initials: member.initials,
+      color: member.color,
+      balance,
+      type: balance >= 0 ? "available" : "committed"
+    };
+  });
+}
+
 function escapeHTML(value) {
   return String(value ?? "").replace(/[&<>\"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character]));
 }
@@ -145,9 +185,16 @@ function statusMeta(status) {
   const map = {
     settled: { label: "Cleared", className: "status-settled" },
     pending: { label: "Pending", className: "status-pending" },
-    review: { label: "Review split", className: "status-review" }
+    review: { label: "Review split", className: "status-review" },
+    rejected: { label: "Split rejected", className: "status-rejected" }
   };
   return map[status] || map.review;
+}
+
+function transactionTypeMeta(transaction) {
+  return transaction.kind === "income"
+    ? { label: "Income", className: "transaction-income" }
+    : { label: "Expense", className: "transaction-expense" };
 }
 
 function categoryMeta(category) {
@@ -197,10 +244,12 @@ function renderOverviewExpenses() {
   list.innerHTML = expenseData.slice(0, 4).map((expense) => {
     const meta = categoryMeta(expense.category);
     const status = statusMeta(expense.status);
+    const activityVerb = expense.kind === "income" ? "received" : "paid";
+    const transactionType = transactionTypeMeta(expense);
     return `
       <div class="expense-row">
         <span class="category-icon ${meta.className}">${meta.icon}</span>
-        <div class="expense-main"><strong>${escapeHTML(expense.title)}</strong><span>${escapeHTML(expense.payer)} paid · ${escapeHTML(expense.dateLabel)}</span></div>
+        <div class="expense-main"><strong>${escapeHTML(expense.title)}</strong><span>${escapeHTML(expense.payer)} ${activityVerb} · ${escapeHTML(expense.dateLabel)}</span><span class="transaction-type-inline ${transactionType.className}">${transactionType.label}</span></div>
         <strong class="expense-amount">${formatMoney(expense.amount)}</strong>
         <span class="expense-status ${status.className}">${status.label}</span>
       </div>
@@ -212,7 +261,7 @@ function renderOverviewBalances() {
   const list = document.querySelector("#overview-balance-list");
   if (!list) return;
 
-  list.innerHTML = balanceData.slice(0, 4).map((entry) => `
+  list.innerHTML = getAccountBalances().slice(0, 4).map((entry) => `
     <div class="balance-row">
       <span class="avatar ${entry.color}">${entry.initials}</span>
       <div><strong>${escapeHTML(entry.name)}</strong><small>${entry.type}</small></div>
@@ -240,31 +289,55 @@ function renderExpensePage() {
 
   const filtered = expenseData.filter((expense) => {
     const matchesFilter = currentExpenseFilter === "all" || expense.status === currentExpenseFilter;
+    const matchesType = currentTransactionType === "all" || (currentTransactionType === "income" ? expense.kind === "income" : expense.kind !== "income");
     const searchTerm = expenseSearchText.trim().toLowerCase();
     const matchesSearch = !searchTerm || `${expense.title} ${expense.payer}`.toLowerCase().includes(searchTerm);
-    return matchesFilter && matchesSearch;
+    return matchesFilter && matchesType && matchesSearch;
   });
 
   list.innerHTML = filtered.length
     ? filtered.map((expense) => {
       const meta = categoryMeta(expense.category);
       const status = statusMeta(expense.status);
+      const transactionType = transactionTypeMeta(expense);
       const participants = expense.participants || members.map((member) => member.name.split(" ")[0]);
       const breakdown = expense.breakdown || Object.fromEntries(participants.map((person) => [person, expense.amount / participants.length]));
       const owingBreakdown = Object.entries(breakdown).filter(([person]) => person !== expense.payer);
       const detailClass = expandedExpenseId === expense.id ? "expense-details show" : "expense-details";
+      const activityVerb = expense.kind === "income" ? "received" : "paid";
+      const actorLabel = expense.kind === "income" ? "Received by" : "Paid by";
+      const approvalMembers = getApprovalMembers(expense);
+      const approvals = expense.approvals || [];
+      const reviewActions = expense.status === "review" ? `
+                <div class="expense-review-actions">
+                  <span>Every other member must approve</span>
+                  <div>
+                    <button class="secondary-button review-reject-button" type="button" data-review-action="reject" data-expense-id="${expense.id}">Reject split</button>
+                  </div>
+                </div>` : "";
+      const approvalRows = expense.status === "review" ? `
+                <div class="expense-approvals">
+                  <span>Member approvals</span>
+                  ${approvalMembers.map((member) => approvals.some((approved) => sameMember(approved, member))
+                    ? `<small class="approval-complete">${escapeHTML(member)} · Approved</small>`
+                    : sameMember(member, currentUserName)
+                      ? `<button class="approval-button" type="button" data-approve-member="${escapeHTML(member)}" data-expense-id="${expense.id}">You · Approve split</button>`
+                      : `<small class="approval-waiting">${escapeHTML(member)} · Awaiting approval</small>`).join("")}
+                </div>` : "";
       return `
           <div class="expense-entry">
             <button class="expense-row page-expense-row" type="button" data-expense-id="${expense.id}" aria-expanded="${expandedExpenseId === expense.id}">
             <span class="category-icon ${meta.className}">${meta.icon}</span>
-            <div class="expense-main"><strong>${escapeHTML(expense.title)}</strong><span>${escapeHTML(expense.payer)} paid · ${escapeHTML(expense.dateLabel)}</span></div>
+            <div class="expense-main"><strong>${escapeHTML(expense.title)}</strong><span>${escapeHTML(expense.payer)} ${activityVerb} · ${escapeHTML(expense.dateLabel)}</span><span class="transaction-type-inline ${transactionType.className}">${transactionType.label}</span></div>
             <strong class="expense-amount">${formatMoney(expense.amount)}</strong>
             <span class="expense-status ${status.className}">${status.label}</span>
             </button>
             <div class="${detailClass}">
-              <div><span>Paid by</span><strong>${escapeHTML(expense.payer)}</strong></div>
+              <div><span>${actorLabel}</span><strong>${escapeHTML(expense.payer)}</strong></div>
               <div><span>Status</span><strong>${status.label}</strong></div>
-              <div class="expense-split-list"><span>Fair split</span><small>${escapeHTML(expense.payer)} · Already paid ${formatMoney(breakdown[expense.payer] || expense.amount / participants.length)}</small>${owingBreakdown.map(([person, amount]) => `<small>${escapeHTML(person)} · Owes ${formatMoney(amount)}</small>`).join("")}</div>
+              <div class="expense-split-list"><span>${expense.kind === "income" ? "Income details" : "Fair split"}</span><small>${escapeHTML(expense.payer)} · ${expense.kind === "income" ? "Received" : "Already paid"} ${formatMoney(breakdown[expense.payer] || expense.amount / participants.length)}</small>${expense.kind === "income" ? "" : owingBreakdown.map(([person, amount]) => `<small>${escapeHTML(person)} · Owes ${formatMoney(amount)}</small>`).join("")}</div>
+              ${approvalRows}
+              ${reviewActions}
             </div>
           </div>
         `;
@@ -315,7 +388,53 @@ function addExpenseToHistory(analysis, description) {
   });
   localStorage.setItem("northstarTransactions", JSON.stringify(expenseData.slice(0, 50)));
   renderOverviewExpenses();
-  renderCashFlowOverview();
+  refreshTransactionMetrics();
+  renderOverviewBalances();
+  renderBalancesPage();
+  renderMembersPage();
+  renderExpensePage();
+  renderNotifications();
+  updateNotificationBadge();
+}
+
+function updateExpenseReview(expenseId, decision) {
+  const expense = expenseData.find((item) => item.id === expenseId);
+  if (!expense || expense.status !== "review") return;
+
+  expense.status = "rejected";
+  expense.splitDecision = decision;
+  localStorage.setItem("northstarTransactions", JSON.stringify(expenseData.slice(0, 100)));
+  renderOverviewExpenses();
+  refreshTransactionMetrics();
+  renderOverviewBalances();
+  renderBalancesPage();
+  renderMembersPage();
+  renderExpensePage();
+  renderNotifications();
+  updateNotificationBadge();
+}
+
+function approveExpenseSplit(expenseId, memberName) {
+  const expense = expenseData.find((item) => item.id === expenseId);
+  if (!expense || expense.status !== "review" || !sameMember(memberName, currentUserName)) return;
+
+  const approvals = expense.approvals || [];
+  if (!approvals.some((approved) => sameMember(approved, memberName))) {
+    expense.approvals = [...approvals, memberName];
+  }
+
+  const requiredMembers = getApprovalMembers(expense);
+  if (requiredMembers.every((member) => expense.approvals.some((approved) => sameMember(approved, member)))) {
+    expense.status = "settled";
+    expense.splitDecision = "approved_by_all";
+  }
+
+  localStorage.setItem("northstarTransactions", JSON.stringify(expenseData.slice(0, 100)));
+  renderOverviewExpenses();
+  refreshTransactionMetrics();
+  renderOverviewBalances();
+  renderBalancesPage();
+  renderMembersPage();
   renderExpensePage();
   renderNotifications();
   updateNotificationBadge();
@@ -333,7 +452,89 @@ function getRecentTransactions(daysAgoStart, daysAgoEnd) {
 }
 
 function getRecentSpending(daysAgoStart, daysAgoEnd) {
-  return getRecentTransactions(daysAgoStart, daysAgoEnd).filter((transaction) => transaction.kind !== "income");
+  return getRecentTransactions(daysAgoStart, daysAgoEnd).filter(isTrackedExpense);
+}
+
+function isRealizedCashFlow(transaction) {
+  return transaction.kind === "income" || transaction.status === "settled";
+}
+
+function isTrackedExpense(transaction) {
+  return transaction.kind !== "income" && transaction.status !== "rejected";
+}
+
+function getCashFlowBuckets(range) {
+  const now = new Date();
+  const buckets = [];
+  const bucketCount = range === "day" ? 14 : range === "week" ? 8 : range === "ytd" ? now.getMonth() + 1 : 6;
+  const getBucketDate = (index) => {
+    const date = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (range === "day") date.setDate(date.getDate() - (bucketCount - 1 - index));
+    if (range === "week") date.setDate(date.getDate() - (bucketCount - 1 - index) * 7);
+    if (range === "month" || range === "ytd") date.setMonth(date.getMonth() - (bucketCount - 1 - index));
+    return date;
+  };
+
+  for (let index = 0; index < bucketCount; index += 1) {
+    const date = getBucketDate(index);
+    buckets.push({ date, received: 0, paid: 0, net: 0 });
+  }
+
+  expenseData.filter((transaction) => transaction.kind === "income" || isTrackedExpense(transaction)).forEach((transaction) => {
+    if (!transaction.date) return;
+    const transactionDate = new Date(transaction.date);
+    let bucketIndex = -1;
+    if (range === "day") {
+      bucketIndex = buckets.findIndex((bucket) => bucket.date.toDateString() === transactionDate.toDateString());
+    } else if (range === "week") {
+      const daysAgo = Math.floor((Date.now() - transactionDate.getTime()) / 86400000);
+      bucketIndex = bucketCount - 1 - Math.floor(daysAgo / 7);
+    } else {
+      bucketIndex = buckets.findIndex((bucket) => bucket.date.getFullYear() === transactionDate.getFullYear() && bucket.date.getMonth() === transactionDate.getMonth());
+    }
+    if (bucketIndex < 0 || !buckets[bucketIndex]) return;
+    const amount = Number(transaction.amount) || 0;
+    if (transaction.kind === "income") buckets[bucketIndex].received += amount;
+    else buckets[bucketIndex].paid += amount;
+    buckets[bucketIndex].net = buckets[bucketIndex].received - buckets[bucketIndex].paid;
+  });
+
+  return buckets;
+}
+
+function renderCashFlowChart() {
+  const chart = document.querySelector("#cash-flow-chart");
+  const rangeSelect = document.querySelector("#cash-flow-range");
+  const receivedTotal = document.querySelector("#chart-received-total");
+  const paidTotal = document.querySelector("#chart-paid-total");
+  if (!chart || !rangeSelect || !receivedTotal || !paidTotal) return;
+
+  const buckets = getCashFlowBuckets(rangeSelect.value);
+  const width = 620;
+  const height = 210;
+  const padding = { top: 16, right: 14, bottom: 31, left: 50 };
+  const values = buckets.map((bucket) => bucket.net);
+  const maxValue = Math.max(...values.map(Math.abs), 1);
+  const chartHeight = height - padding.top - padding.bottom;
+  const chartWidth = width - padding.left - padding.right;
+  const y = (value) => padding.top + ((maxValue - value) / (maxValue * 2)) * chartHeight;
+  const x = (index) => padding.left + (index / Math.max(buckets.length - 1, 1)) * chartWidth;
+  const points = buckets.map((bucket, index) => `${x(index)},${y(bucket.net)}`).join(" ");
+  const zeroY = y(0);
+  const labels = buckets.map((bucket, index) => {
+    const label = rangeSelect.value === "day"
+      ? new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(bucket.date)
+      : rangeSelect.value === "week"
+        ? `W${index + 1}`
+        : new Intl.DateTimeFormat("en-US", { month: "short" }).format(bucket.date);
+    return `<text x="${x(index)}" y="${height - 8}" text-anchor="middle">${label}</text>`;
+  }).join("");
+  const grid = [maxValue, 0, -maxValue].map((value) => `<line x1="${padding.left}" x2="${width - padding.right}" y1="${y(value)}" y2="${y(value)}" />`).join("");
+  const received = buckets.reduce((sum, bucket) => sum + bucket.received, 0);
+  const paid = buckets.reduce((sum, bucket) => sum + bucket.paid, 0);
+  receivedTotal.textContent = formatMoney(received);
+  paidTotal.textContent = formatMoney(paid);
+  chart.innerHTML = `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true"><g class="cash-flow-grid">${grid}</g><line class="cash-flow-zero" x1="${padding.left}" x2="${width - padding.right}" y1="${zeroY}" y2="${zeroY}" /><polyline class="cash-flow-line" points="${points}" />${buckets.map((bucket, index) => `<circle class="cash-flow-point" cx="${x(index)}" cy="${y(bucket.net)}" r="3"><title>${escapeHTML(formatMoney(bucket.net))}</title></circle>`).join("")}${labels}</svg>`;
 }
 
 function renderCashFlowOverview() {
@@ -345,7 +546,7 @@ function renderCashFlowOverview() {
 
   const recent = getRecentTransactions(0, 30);
   const inflow = recent.filter((transaction) => transaction.kind === "income").reduce((sum, transaction) => sum + Number(transaction.amount), 0);
-  const outflow = recent.filter((transaction) => transaction.kind !== "income").reduce((sum, transaction) => sum + Number(transaction.amount), 0);
+  const outflow = recent.filter(isTrackedExpense).reduce((sum, transaction) => sum + Number(transaction.amount), 0);
   const net = inflow - outflow;
   const retention = inflow + outflow ? Math.max(0, Math.min(100, (net / inflow) * 100)) : 0;
 
@@ -355,6 +556,39 @@ function renderCashFlowOverview() {
   inflowElement.textContent = `In ${formatMoney(inflow)}`;
   outflowElement.textContent = `Out ${formatMoney(outflow)}`;
   progressElement.style.width = `${retention}%`;
+  renderCashFlowChart();
+}
+
+function renderFinancialSummary() {
+  const availableElement = document.querySelector("#available-to-save-value");
+  const availableFoot = document.querySelector("#available-to-save-foot");
+  const spendingElement = document.querySelector("#monthly-spending-value");
+  const spendingFoot = document.querySelector("#monthly-spending-foot");
+  if (!availableElement || !availableFoot || !spendingElement || !spendingFoot) return;
+
+  const recent = getRecentTransactions(0, 30);
+  const previous = getRecentTransactions(30, 60);
+  const trackedRecent = recent.filter((transaction) => transaction.kind === "income" || isTrackedExpense(transaction));
+  const trackedPrevious = previous.filter((transaction) => transaction.kind === "income" || isTrackedExpense(transaction));
+  const recentNet = trackedRecent.reduce((sum, transaction) => sum + (transaction.kind === "income" ? Number(transaction.amount) : -Number(transaction.amount)), 0);
+  const previousNet = trackedPrevious.reduce((sum, transaction) => sum + (transaction.kind === "income" ? Number(transaction.amount) : -Number(transaction.amount)), 0);
+  const currentDate = new Date();
+  const currentMonth = expenseData.filter((transaction) => {
+    if (!transaction.date || !isTrackedExpense(transaction)) return false;
+    const date = new Date(transaction.date);
+    return date.getFullYear() === currentDate.getFullYear() && date.getMonth() === currentDate.getMonth();
+  });
+  const monthlySpending = currentMonth.reduce((sum, transaction) => sum + Number(transaction.amount), 0);
+  const netChange = recentNet - previousNet;
+
+  availableElement.textContent = `${recentNet >= 0 ? "+" : "−"}${formatMoney(Math.abs(recentNet))}`;
+  availableElement.classList.toggle("balance-positive", recentNet >= 0);
+  availableElement.classList.toggle("balance-negative", recentNet < 0);
+  availableFoot.className = `stat-foot ${recentNet >= 0 ? "positive" : "negative"}`;
+  availableFoot.innerHTML = `${netChange >= 0 ? "↑" : "↓"} ${formatMoney(Math.abs(netChange))} <span>vs. prior 30 days</span>`;
+
+  spendingElement.textContent = formatMoney(monthlySpending);
+  spendingFoot.textContent = `${currentMonth.length} transaction${currentMonth.length === 1 ? "" : "s"} this month`;
 }
 
 function renderSpendingReview() {
@@ -394,14 +628,23 @@ function renderSpendingReview() {
     : '<div class="review-empty"><strong>No recent spending found.</strong><span>Your last 30 days will appear here as transactions are added.</span></div>';
 }
 
+function refreshTransactionMetrics() {
+  renderCashFlowOverview();
+  renderFinancialSummary();
+  if (spendingReviewModal && spendingReviewModal.classList.contains("open")) {
+    renderSpendingReview();
+  }
+}
+
 function renderBalancesPage() {
   const summary = document.querySelector("#balances-summary");
   const list = document.querySelector("#balances-list");
   if (!summary || !list) return;
 
-  const totalGroupSpending = expenseData.reduce((sum, expense) => sum + Number(expense.amount), 0);
-  const owed = balanceData.filter((entry) => entry.type === "available").reduce((sum, entry) => sum + Number(entry.balance), 0);
-  const owes = balanceData.filter((entry) => entry.type === "committed").reduce((sum, entry) => sum + Number(entry.balance), 0);
+  const totalGroupSpending = expenseData.filter((expense) => expense.kind !== "income" && isRealizedCashFlow(expense)).reduce((sum, expense) => sum + Number(expense.amount), 0);
+  const accountBalances = getAccountBalances();
+  const available = accountBalances.filter((entry) => entry.type === "available").reduce((sum, entry) => sum + Number(entry.balance), 0);
+  const committed = accountBalances.filter((entry) => entry.type === "committed").reduce((sum, entry) => sum + Math.abs(Number(entry.balance)), 0);
 
   summary.innerHTML = `
     <article class="stat-card accent-blue">
@@ -411,17 +654,17 @@ function renderBalancesPage() {
     </article>
     <article class="stat-card accent-green">
       <div class="stat-icon">↗</div>
-      <div class="stat-label">You are owed</div>
-      <div class="stat-value">${formatMoney(owed)}</div>
+      <div class="stat-label">Available across accounts</div>
+      <div class="stat-value">${formatMoney(available)}</div>
     </article>
     <article class="stat-card accent-peach">
       <div class="stat-icon">↘</div>
-      <div class="stat-label">You owe</div>
-      <div class="stat-value">${formatMoney(owes)}</div>
+      <div class="stat-label">Committed across accounts</div>
+      <div class="stat-value">${formatMoney(committed)}</div>
     </article>
   `;
 
-  list.innerHTML = balanceData.map((entry) => `
+  list.innerHTML = accountBalances.map((entry) => `
     <div class="balance-row balance-row-large">
       <span class="avatar ${entry.color}">${entry.initials}</span>
       <div class="balance-name-block"><strong>${escapeHTML(entry.name)}</strong><small>${entry.type}</small></div>
@@ -448,7 +691,7 @@ function renderMembersPage() {
       </div>
       <div class="member-meta-row">
         <span>Current balance</span>
-        <strong class="${member.role === "Primary account" ? "balance-positive" : "balance-negative"}">${member.role === "Primary account" ? "$186.40" : "-$110.20"}</strong>
+        <strong class="${getAccountBalances().find((entry) => entry.name === member.name)?.type === "available" ? "balance-positive" : "balance-negative"}">${formatMoney(getAccountBalances().find((entry) => entry.name === member.name)?.balance || 0)}</strong>
       </div>
       <div class="member-meta-row">
         <span>Role</span>
@@ -845,6 +1088,29 @@ document.addEventListener("click", (event) => {
     return;
   }
 
+  const typeFilterButton = event.target.closest("[data-type-filter]");
+  if (typeFilterButton) {
+    currentTransactionType = typeFilterButton.dataset.typeFilter || "all";
+    document.querySelectorAll("[data-type-filter]").forEach((buttonEl) => buttonEl.classList.toggle("active", buttonEl === typeFilterButton));
+    renderExpensePage();
+    closeNotificationPanel();
+    return;
+  }
+
+  const approvalButton = event.target.closest("[data-approve-member]");
+  if (approvalButton) {
+    event.stopPropagation();
+    approveExpenseSplit(Number(approvalButton.dataset.expenseId), approvalButton.dataset.approveMember);
+    return;
+  }
+
+  const reviewAction = event.target.closest("[data-review-action]");
+  if (reviewAction) {
+    event.stopPropagation();
+    updateExpenseReview(Number(reviewAction.dataset.expenseId), reviewAction.dataset.reviewAction);
+    return;
+  }
+
   const expenseButton = event.target.closest("[data-expense-id]");
   if (expenseButton) {
     const expenseId = Number(expenseButton.dataset.expenseId);
@@ -885,6 +1151,12 @@ document.addEventListener("input", (event) => {
   if (event.target.matches("[data-setting]")) {
     const changes = { [event.target.dataset.setting]: event.target.checked };
     updateSettingsStorage(changes);
+  }
+});
+
+document.addEventListener("change", (event) => {
+  if (event.target.id === "cash-flow-range") {
+    renderCashFlowChart();
   }
 });
 
@@ -1028,7 +1300,7 @@ function renderResult({ classification, split, source }) {
   const paidRow = paidBy ? `<div class="result-person"><span>${escapeHTML(paidBy)} · Already paid</span><b>$${Number(split.already_paid || 0).toFixed(2)}</b></div>` : "";
   const people = Object.entries(split.breakdown).filter(([person]) => person !== paidBy).map(([person, value]) => `<div class="result-person"><span>${escapeHTML(person)} · Owes</span><b>$${Number(value).toFixed(2)}</b></div>`).join("");
   const splitRows = paidRow + people;
-  result.innerHTML = `<h3>${escapeHTML(classification.summary || "Transaction review")} <span style="color:#4f9b75;font-size:10px;font-family:'DM Sans'">${source}</span></h3><div class="result-summary"><span class="result-pill">${categoryLabels[classification.category]}</span><span class="result-pill">${classification.split_hint === "equal" ? "Split equally" : "Excluded named guest"}</span><span class="result-pill">${classification.amount_confidence} confidence</span></div><div class="result-breakdown">${splitRows}</div><div class="analysis-actions"><button class="secondary-button" type="button" data-cancel-expense>Cancel</button><button class="primary-button" type="button" data-confirm-expense>Confirm transaction</button></div>`;
+  result.innerHTML = `<h3>${escapeHTML(classification.summary || "Transaction review")} <span style="color:#4f9b75;font-size:10px;font-family:'Manrope'">${source}</span></h3><div class="result-summary"><span class="result-pill">${categoryLabels[classification.category]}</span><span class="result-pill">${classification.split_hint === "equal" ? "Split equally" : "Excluded named guest"}</span><span class="result-pill">${classification.amount_confidence} confidence</span></div><div class="result-breakdown">${splitRows}</div><div class="analysis-actions"><button class="secondary-button" type="button" data-cancel-expense>Cancel</button><button class="primary-button" type="button" data-confirm-expense>Confirm transaction</button></div>`;
   result.classList.add("show");
 }
 
@@ -1143,7 +1415,7 @@ if (!window.location.hash) {
 
 window.addEventListener("hashchange", renderRoute);
 renderOverviewExpenses();
-renderCashFlowOverview();
+refreshTransactionMetrics();
 renderOverviewBalances();
 renderOverviewMembers();
 renderExpensePage();

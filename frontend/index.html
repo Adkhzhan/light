@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <style>
@@ -49,7 +49,7 @@
     .trip-total strong,
     .trip-per-person strong {
       display: block;
-      font: 700 30px "Space Grotesk";
+      font: 700 30px "Sora";
       margin: 4px 0
     }
 
@@ -70,7 +70,7 @@
     }
 
     .trip-analysis-result h3 {
-      font: 700 13px "Space Grotesk";
+      font: 700 13px "Sora";
       margin: 17px 0 9px
     }
 
@@ -165,7 +165,6 @@
         <div class="user-profile">
           <span class="avatar avatar-coral">AT</span>
           <span><strong>Alex Thompson</strong><small>alex@email.com</small></span>
-          <span class="more">•••</span>
         </div>
       </div>
     </aside>
@@ -216,12 +215,33 @@
             </div>
           </div>
 
+          <section class="panel cash-flow-trend-panel">
+            <div class="panel-heading">
+              <div>
+                <h2>Cash flow trend</h2>
+                <p>Received minus tracked spending</p>
+              </div>
+              <label class="chart-range-label" for="cash-flow-range">View
+                <select class="select-button" id="cash-flow-range" aria-label="Cash flow chart range">
+                  <option value="day">By day</option>
+                  <option value="week">By week</option>
+                  <option value="month" selected>By month</option>
+                  <option value="ytd">Year to date</option>
+                </select>
+              </label>
+            </div>
+            <div class="cash-flow-chart-wrap">
+              <div class="cash-flow-chart" id="cash-flow-chart" role="img" aria-label="Cash flow line chart"></div>
+              <div class="cash-flow-chart-summary"><span><i class="dot received-dot"></i>Received <b id="chart-received-total">$0.00</b></span><span><i class="dot paid-dot"></i>Paid <b id="chart-paid-total">$0.00</b></span></div>
+            </div>
+          </section>
+
           <section class="stats-grid" aria-label="Financial summary">
             <article class="stat-card accent-green">
               <div class="stat-icon">↗</div>
               <div class="stat-label">Available to save</div>
-              <div class="stat-value">$186.40</div>
-              <div class="stat-foot positive">↑ $42.20 <span>vs. last month</span></div>
+              <div class="stat-value" id="available-to-save-value">$0.00</div>
+              <div class="stat-foot positive" id="available-to-save-foot">Based on recent cash flow</div>
             </article>
             <article class="stat-card accent-peach">
               <div class="stat-icon">↘</div>
@@ -232,8 +252,8 @@
             <article class="stat-card accent-blue">
               <div class="stat-icon">◷</div>
               <div class="stat-label">Monthly spending</div>
-              <div class="stat-value">$1,248.62</div>
-              <div class="stat-foot neutral">8 transactions <span>since Sep 14</span></div>
+              <div class="stat-value" id="monthly-spending-value">$0.00</div>
+              <div class="stat-foot neutral" id="monthly-spending-foot">0 transactions this month</div>
             </article>
           </section>
 
@@ -275,25 +295,6 @@
           </section>
 
           <section class="bottom-grid">
-            <article class="panel spending-panel">
-              <div class="panel-heading">
-                <div>
-                  <h2>Spending by category</h2>
-                  <p>Across this month’s transactions</p>
-                </div><button class="select-button" type="button">This month⌄</button>
-              </div>
-              <div class="chart-wrap">
-                <div class="donut-chart">
-                  <div><strong>$1.2k</strong><small>total</small></div>
-                </div>
-                <div class="legend">
-                  <div><i class="dot food-dot"></i>Food <b>$462.40</b></div>
-                  <div><i class="dot transport-dot"></i>Transport <b>$126.50</b></div>
-                  <div><i class="dot lodging-dot"></i>Housing <b>$540.00</b></div>
-                  <div><i class="dot misc-dot"></i>Other <b>$119.72</b></div>
-                </div>
-              </div>
-            </article>
             <article class="panel members-panel">
               <div class="panel-heading">
                 <div>
@@ -321,6 +322,8 @@
                 <input id="expense-search" type="search" placeholder="Search transactions" />
               </label>
               <div class="filter-group" aria-label="Transaction filters">
+                <button type="button" class="filter-chip filter-chip-income" data-type-filter="income">Income</button>
+                <button type="button" class="filter-chip filter-chip-expense" data-type-filter="expense">Expense</button>
                 <button type="button" class="filter-chip active" data-filter="all">All</button>
                 <button type="button" class="filter-chip" data-filter="settled">Cleared</button>
                 <button type="button" class="filter-chip" data-filter="pending">Pending</button>

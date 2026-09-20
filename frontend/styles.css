@@ -27,7 +27,7 @@ body {
   margin: 0;
   background: var(--canvas);
   color: var(--ink);
-  font-family: "DM Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 14px
 }
 
@@ -66,7 +66,7 @@ a {
   display: flex;
   align-items: center;
   gap: 10px;
-  font: bold 21px "Space Grotesk";
+  font: 800 21px "Sora";
   letter-spacing: -1px;
   padding: 0 12px 31px
 }
@@ -332,12 +332,6 @@ a {
   font-size: 10px
 }
 
-.more {
-  margin-left: auto;
-  color: var(--muted);
-  letter-spacing: 2px
-}
-
 .main-content {
   margin-left: 245px;
   flex: 1
@@ -450,7 +444,7 @@ a {
 
 .notification-panel-header h2 {
   margin: 0;
-  font: 600 15px "Space Grotesk";
+  font: 600 15px "Sora";
   letter-spacing: -.2px
 }
 
@@ -625,7 +619,7 @@ a {
 }
 
 .welcome-row h1 {
-  font: 600 32px "Space Grotesk";
+  font: 600 32px "Sora";
   letter-spacing: -1.3px;
   margin: 0 0 8px
 }
@@ -655,6 +649,10 @@ a {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 15px;
+  margin-bottom: 22px
+}
+
+.cash-flow-trend-panel {
   margin-bottom: 22px
 }
 
@@ -707,7 +705,7 @@ a {
 }
 
 .stat-value {
-  font: 600 28px "Space Grotesk";
+  font: 600 28px "Sora";
   letter-spacing: -1px
 }
 
@@ -757,7 +755,7 @@ a {
 }
 
 .panel-heading h2 {
-  font: 600 16px "Space Grotesk";
+  font: 600 16px "Sora";
   margin: 0 0 5px;
   letter-spacing: -.3px
 }
@@ -840,6 +838,76 @@ a {
   margin-top: 4px;
 }
 
+.expense-review-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 4px;
+  border-top: 1px solid #edf1ee
+}
+
+.expense-review-actions > span {
+  color: var(--ink);
+  font-size: 11px
+}
+
+.expense-review-actions > div {
+  display: flex;
+  gap: 7px
+}
+
+.expense-approvals {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 4px
+}
+
+.expense-approvals > span {
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 600
+}
+
+.approval-button {
+  width: fit-content;
+  background: #eef8f3;
+  border: 1px solid #cfe9d8;
+  border-radius: 6px;
+  color: #2d8e63;
+  padding: 6px 9px;
+  font-size: 10px;
+  text-align: left
+}
+
+.approval-button:hover {
+  background: #e2f3ea
+}
+
+.approval-complete {
+  color: #4d9a75;
+  font-size: 10px
+}
+
+.approval-waiting {
+  color: var(--muted);
+  font-size: 10px
+}
+
+.review-confirm-button,
+.review-reject-button {
+  padding: 7px 10px;
+  font-size: 10px
+}
+
+.review-reject-button {
+  color: #b55f51;
+  border-color: #f0c8c0
+}
+
 .category-icon {
   display: flex;
   width: 32px;
@@ -897,6 +965,26 @@ a {
   white-space: nowrap
 }
 
+.transaction-type-inline {
+  display: inline-block;
+  width: fit-content;
+  font-size: 10px;
+  padding: 5px 8px;
+  border-radius: 5px;
+  white-space: nowrap;
+  font-weight: 600
+}
+
+.transaction-income {
+  color: #2d8e63;
+  background: #eaf7f0
+}
+
+.transaction-expense {
+  color: #b45d51;
+  background: #ffebe7
+}
+
 .status-review {
   color: #c47d22;
   background: #fff4dc
@@ -912,6 +1000,11 @@ a {
   background: #efedff
 }
 
+.status-rejected {
+  color: #b55f51;
+  background: #ffebe7
+}
+
 .balance-total {
   display: flex;
   justify-content: space-between;
@@ -922,7 +1015,7 @@ a {
 }
 
 .balance-total strong {
-  font: 600 20px "Space Grotesk";
+  font: 600 20px "Sora";
   color: var(--ink)
 }
 
@@ -1039,7 +1132,7 @@ a {
 }
 
 .insight-card strong {
-  font: 600 13px "Space Grotesk"
+  font: 600 13px "Sora"
 }
 
 .insight-card p {
@@ -1071,7 +1164,7 @@ a {
 }
 
 .bottom-grid {
-  grid-template-columns: 1fr 1fr
+  grid-template-columns: 1fr
 }
 
 .select-button {
@@ -1111,7 +1204,7 @@ a {
 }
 
 .donut-chart strong {
-  font: 600 18px "Space Grotesk"
+  font: 600 18px "Sora"
 }
 
 .donut-chart small {
@@ -1163,13 +1256,105 @@ a {
 }
 
 .count-pill {
-  font: 500 10px "DM Sans";
+  font: 500 10px "Manrope";
   background: #edf6f0;
   color: #4c9a73;
   border-radius: 10px;
   padding: 3px 7px;
   vertical-align: 2px;
   margin-left: 4px
+}
+
+.chart-range-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 10px
+}
+
+.chart-range-label .select-button {
+  border: 1px solid var(--line);
+  color: var(--ink);
+  cursor: pointer;
+  font-family: "Sora", sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .01em
+}
+
+.cash-flow-chart-wrap {
+  min-width: 0
+}
+
+.cash-flow-chart {
+  width: 100%;
+  height: 210px;
+  margin-top: 10px
+}
+
+.cash-flow-chart svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible
+}
+
+.cash-flow-grid line {
+  stroke: #edf1ee;
+  stroke-width: 1
+}
+
+.cash-flow-zero {
+  stroke: #c9d5ce;
+  stroke-width: 1;
+  stroke-dasharray: 4 4
+}
+
+.cash-flow-line {
+  fill: none;
+  stroke: var(--green-strong);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round
+}
+
+.cash-flow-point {
+  fill: #fff;
+  stroke: var(--green-strong);
+  stroke-width: 2
+}
+
+.cash-flow-chart text {
+  fill: var(--muted);
+  font: 10px "Manrope"
+}
+
+.cash-flow-chart-summary {
+  display: flex;
+  gap: 18px;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 10px
+}
+
+.cash-flow-chart-summary span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px
+}
+
+.cash-flow-chart-summary b {
+  color: var(--ink);
+  font-weight: 600
+}
+
+.received-dot {
+  background: var(--green-strong)
+}
+
+.paid-dot {
+  background: var(--peach-strong)
 }
 
 .member-list {
@@ -1235,7 +1420,7 @@ a {
 }
 
 .modal h2 {
-  font: 600 25px "Space Grotesk";
+  font: 600 25px "Sora";
   margin: 7px 0 6px
 }
 
@@ -1325,7 +1510,7 @@ a {
 }
 
 .analysis-result h3 {
-  font: 600 15px "Space Grotesk";
+  font: 600 15px "Sora";
   margin: 0 0 12px
 }
 
@@ -1395,7 +1580,7 @@ a {
 .review-stat strong {
   display: block;
   margin: 6px 0 4px;
-  font: 600 17px "Space Grotesk"
+  font: 600 17px "Sora"
 }
 
 .review-section {
@@ -1403,7 +1588,7 @@ a {
 }
 
 .review-section h3 {
-  font: 600 14px "Space Grotesk";
+  font: 600 14px "Sora";
   margin: 0 0 10px
 }
 
@@ -1438,7 +1623,7 @@ a {
 }
 
 .review-callout strong {
-  font: 600 12px "Space Grotesk"
+  font: 600 12px "Sora"
 }
 
 .review-callout p {
@@ -1722,6 +1907,18 @@ a {
   background: #eef8f3;
   color: #2d7b5f;
   border-color: #cae7d6;
+}
+
+.filter-chip-income.active {
+  background: #eaf7f0;
+  color: #2d8e63;
+  border-color: #bfe2cc
+}
+
+.filter-chip-expense.active {
+  background: #ffebe7;
+  color: #b45d51;
+  border-color: #f0c8c0
 }
 
 .page-expense-list .expense-row {
@@ -2039,7 +2236,7 @@ body.modal-open {
 
 .modal h2 {
   margin: 0 0 8px;
-  font: 700 28px "Space Grotesk";
+  font: 700 28px "Sora";
   letter-spacing: -0.04em;
 }
 
