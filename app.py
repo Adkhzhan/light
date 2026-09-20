@@ -126,6 +126,9 @@ def expense_analysis_endpoint():
     classification["split_hint"] = "exclude_named" if excluded else classification.get("split_hint", "equal")
     classification.setdefault("summary", f"{classification.get('category', 'misc').capitalize()} expense")
     split = compute_split(amount, included, classification["split_hint"])
+    split["paid_by"] = payer
+    split["already_paid"] = split["breakdown"].get(payer, 0)
+    split["paid_total"] = amount
     return jsonify({"amount": amount, "classification": classification, "split": split, "source": source})
 
 

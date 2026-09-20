@@ -61,6 +61,9 @@ def test_expense_analysis_route_splits_only_present_members(monkeypatch):
     assert response.status_code == 200
     data = response.get_json()
     assert data["classification"]["participants_excluded"] == ["Sam"]
+    assert data["split"]["paid_by"] == "Alex"
+    assert data["split"]["already_paid"] == 28.0
+    assert data["split"]["paid_total"] == 84.0
     assert data["split"]["breakdown"] == {"Alex": 28.0, "Leo": 28.0, "Priya": 28.0}
 
 
@@ -86,6 +89,9 @@ def test_expense_analysis_uses_payer_named_in_description(monkeypatch):
     assert response.status_code == 200
     data = response.get_json()
     assert data["classification"]["payer"] == "Sam"
+    assert data["split"]["paid_by"] == "Sam"
+    assert data["split"]["already_paid"] == 30.0
+    assert data["split"]["paid_total"] == 90.0
     assert data["split"]["breakdown"] == {"Leo": 30.0, "Priya": 30.0, "Sam": 30.0}
 
 

@@ -81,6 +81,7 @@ const smartInsight = document.querySelector(".insight-card");
 let currentExpenseFilter = "all";
 let expenseSearchText = "";
 let pendingExpense = null;
+let expandedExpenseId = null;
 
 function dismissSmartInsight() {
   if (!smartInsight) return;
@@ -208,12 +209,23 @@ function renderExpensePage() {
     ? filtered.map((expense) => {
       const meta = categoryMeta(expense.category);
       const status = statusMeta(expense.status);
+      const participants = expense.participants || members.map((member) => member.name.split(" ")[0]);
+      const breakdown = expense.breakdown || Object.fromEntries(participants.map((person) => [person, expense.amount / participants.length]));
+      const owingBreakdown = Object.entries(breakdown).filter(([person]) => person !== expense.payer);
+      const detailClass = expandedExpenseId === expense.id ? "expense-details show" : "expense-details";
       return `
-          <div class="expense-row page-expense-row">
+          <div class="expense-entry">
+            <button class="expense-row page-expense-row" type="button" data-expense-id="${expense.id}" aria-expanded="${expandedExpenseId === expense.id}">
             <span class="category-icon ${meta.className}">${meta.icon}</span>
             <div class="expense-main"><strong>${escapeHTML(expense.title)}</strong><span>${escapeHTML(expense.payer)} paid · ${escapeHTML(expense.dateLabel)}</span></div>
             <strong class="expense-amount">${formatMoney(expense.amount)}</strong>
             <span class="expense-status ${status.className}">${status.label}</span>
+            </button>
+            <div class="${detailClass}">
+              <div><span>Paid by</span><strong>${escapeHTML(expense.payer)}</strong></div>
+              <div><span>Status</span><strong>${status.label}</strong></div>
+              <div class="expense-split-list"><span>Fair split</span><small>${escapeHTML(expense.payer)} · Already paid ${formatMoney(breakdown[expense.payer] || expense.amount / participants.length)}</small>${owingBreakdown.map(([person, amount]) => `<small>${escapeHTML(person)} · Owes ${formatMoney(amount)}</small>`).join("")}</div>
+            </div>
           </div>
         `;
     }).join("")
@@ -255,7 +267,9 @@ function addExpenseToHistory(analysis, description) {
     payer: analysis.classification.payer || "Alex",
     amount: analysis.amount,
     status: "review",
-    category: analysis.classification.category
+    category: analysis.classification.category,
+    participants: analysis.classification.participants_included,
+    breakdown: analysis.split.breakdown
   });
   localStorage.setItem("splitSenseExpenses", JSON.stringify(expenseData.slice(0, 50)));
   renderOverviewExpenses();
@@ -693,6 +707,14 @@ document.addEventListener("click", (event) => {
     return;
   }
 
+  const expenseButton = event.target.closest("[data-expense-id]");
+  if (expenseButton) {
+    const expenseId = Number(expenseButton.dataset.expenseId);
+    expandedExpenseId = expandedExpenseId === expenseId ? null : expenseId;
+    renderExpensePage();
+    return;
+  }
+
   const settleButton = event.target.closest("[data-settle-up]");
   if (settleButton) {
     window.alert("Settlement flow is not implemented yet.");
@@ -768,8 +790,11 @@ async function requestAnalysis(text) {
 
 function renderResult({ classification, split, source }) {
   const categoryLabels = { food: "Food", lodging: "Lodging", transport: "Transport", misc: "Other" };
-  const people = Object.entries(split.breakdown).map(([person, value]) => `<div class="result-person"><span>${escapeHTML(person)}</span><b>$${Number(value).toFixed(2)}</b></div>`).join("");
-  result.innerHTML = `<h3>${escapeHTML(classification.summary || "Suggested split")} <span style="color:#4f9b75;font-size:10px;font-family:'DM Sans'">${source}</span></h3><div class="result-summary"><span class="result-pill">${categoryLabels[classification.category]}</span><span class="result-pill">${classification.split_hint === "equal" ? "Split equally" : "Excluded named guest"}</span><span class="result-pill">${classification.amount_confidence} confidence</span></div><div class="result-breakdown">${people}</div><div class="analysis-actions"><button class="secondary-button" type="button" data-cancel-expense>Cancel</button><button class="primary-button" type="button" data-confirm-expense>Confirm expense</button></div>`;
+  const paidBy = split.paid_by || classification.payer;
+  const paidRow = paidBy ? `<div class="result-person"><span>${escapeHTML(paidBy)} · Already paid</span><b>$${Number(split.already_paid || 0).toFixed(2)}</b></div>` : "";
+  const people = Object.entries(split.breakdown).filter(([person]) => person !== paidBy).map(([person, value]) => `<div class="result-person"><span>${escapeHTML(person)} · Owes</span><b>$${Number(value).toFixed(2)}</b></div>`).join("");
+  const splitRows = paidRow + people;
+  result.innerHTML = `<h3>${escapeHTML(classification.summary || "Suggested split")} <span style="color:#4f9b75;font-size:10px;font-family:'DM Sans'">${source}</span></h3><div class="result-summary"><span class="result-pill">${categoryLabels[classification.category]}</span><span class="result-pill">${classification.split_hint === "equal" ? "Split equally" : "Excluded named guest"}</span><span class="result-pill">${classification.amount_confidence} confidence</span></div><div class="result-breakdown">${splitRows}</div><div class="analysis-actions"><button class="secondary-button" type="button" data-cancel-expense>Cancel</button><button class="primary-button" type="button" data-confirm-expense>Confirm expense</button></div>`;
   result.classList.add("show");
 }
 

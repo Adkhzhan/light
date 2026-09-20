@@ -783,6 +783,56 @@ a {
   border-top: 1px solid #f0f2f0
 }
 
+.page-expense-row {
+  width: 100%;
+  border-right: 0;
+  border-bottom: 0;
+  border-left: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.page-expense-row:hover {
+  background: #fafcfb
+}
+
+.expense-details {
+  display: none;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 24px;
+  padding: 0 12px 14px 46px;
+  border-bottom: 1px solid #f0f2f0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.expense-details.show {
+  display: grid;
+}
+
+.expense-details span,
+.expense-split-list small {
+  display: block;
+}
+
+.expense-details strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.expense-split-list {
+  grid-column: 1 / -1;
+}
+
+.expense-split-list small {
+  margin-top: 4px;
+}
+
 .category-icon {
   display: flex;
   width: 32px;
