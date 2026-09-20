@@ -35,33 +35,41 @@ function createExampleHistory() {
 
   for (let month = 0; month < 6; month += 1) {
     const start = month * 30;
-    add(start + 1, "Rent payment", "Alex Thompson", 1250, "lodging");
+    add(start + 1, "Rent payment", "Alex Thompson", 1425 + month * 12, "lodging");
     add(start + 2, "Paycheck", "Alex Thompson", 5960, "misc", "income");
     add(start + 3, "Paycheck", "Sam Parker", 2140 + month * 35, "misc", "income");
     add(start + 4, "Electric bill", "Leo Wong", 86.4 + month * 3.2, "misc", "expense", "pending");
+    add(start + 5, "Water and sewer", "Alex Thompson", 74 + month * 2.8, "misc", "expense", "pending");
     add(start + 6, "Grocery run", "Sam Parker", 118.62 + month * 4.5, "food");
+    add(start + 7, "Internet + Wi-Fi", "Priya Nair", 88 + month * 2.2, "misc", "expense", "pending");
     add(start + 8, "Dining out", "Sam Parker", 72.8 + month * 2.4, "food", "expense", "review");
+    add(start + 9, "Gas bill", "Priya Nair", 38 + month * 4.75, "misc", "expense", "settled");
     add(start + 10, "Public transit", "Alex Thompson", 54.2 + month, "transport");
+    add(start + 11, "Car insurance", "Leo Wong", 142 + month * 3.5, "transport", "expense", "pending");
     add(start + 12, "Pharmacy", "Leo Wong", 38.45 + month * 1.6, "misc", "expense", "review");
-    add(start + 15, "Internet bill", "Priya Nair", 68, "misc", "expense", "pending");
+    add(start + 13, "Cell phone bill", "Sam Parker", 62 + month * 1.8, "misc", "expense", "settled");
+    add(start + 14, "Dental copay", "Alex Thompson", month % 3 === 1 ? 145 : 42.75, "misc", "expense", "review");
+    add(start + 15, "Internet bill", "Priya Nair", 68 + month * 1.6, "misc", "expense", "pending");
     add(start + 17, "Paycheck", "Priya Nair", 2460 + month * 25, "misc", "income");
     add(start + 18, "Household supplies", "Priya Nair", 64.3 + month * 3, "misc");
+    add(start + 19, "Utility bundle", "Sam Parker", 210 + month * 5, "misc", "expense", "settled");
     add(start + 20, "Coffee and snacks", "Sam Parker", 31.2 + month * 1.8, "food");
+    add(start + 21, "Parking garage", "Alex Thompson", month % 3 === 2 ? 240 : 22, "transport", "expense", "review");
     add(start + 22, "Rideshare", "Alex Thompson", 42.75 + month * 2, "transport");
+    add(start + 23, "Birthday gift", "Priya Nair", month % 2 ? 85 : 112.4, "misc");
     add(start + 24, "Streaming subscriptions", "Priya Nair", 42.97, "misc");
+    add(start + 25, "Meal delivery", "Leo Wong", month % 3 === 0 ? 61.8 : 94.3, "food", "expense", "review");
     add(start + 26, "Weekend groceries", "Sam Parker", 96.4 + month * 5, "food");
+    add(start + 27, "Cleaning supplies", "Sam Parker", month % 2 ? 175 : 29.4, "lodging");
     add(start + 28, "Home supplies", "Leo Wong", 74.6 + month * 2.2, "lodging");
     add(start + 5, "Paycheck", "Leo Wong", 2320 + month * 40, "misc", "income");
     add(start + 7, month % 2 ? "Concert tickets" : "Movie night", "Leo Wong", month % 2 ? 128 : 46.5, "misc");
-    add(start + 9, month % 3 === 0 ? "Water bill" : "Gas bill", "Priya Nair", 38 + month * 4.75, "misc");
+    add(start + 9, month % 3 === 0 ? "Water heater service" : "Gas bill", "Priya Nair", month % 3 === 0 ? 134 : 38 + month * 4.75, "misc", "expense", "pending");
     add(start + 11, month % 2 ? "Car maintenance" : "Bike repair", "Leo Wong", month % 2 ? 214.8 : 58.2, "transport");
     add(start + 13, month % 2 ? "Takeout noodles" : "Farmers market", "Priya Nair", month % 2 ? 39.6 : 67.25, "food");
-    add(start + 14, month % 3 === 1 ? "Dental copay" : "Prescriptions", "Alex Thompson", month % 3 === 1 ? 145 : 42.75, "misc");
     add(start + 19, month % 2 ? "Weekend hotel" : "Museum passes", "Sam Parker", month % 2 ? 186 : 54, month % 2 ? "lodging" : "misc");
     add(start + 21, month % 3 === 2 ? "Flight deposit" : "Parking", "Alex Thompson", month % 3 === 2 ? 240 : 22, "transport");
-    add(start + 23, month % 2 ? "Birthday gift" : "Clothing", "Priya Nair", month % 2 ? 85 : 112.4, "misc");
     add(start + 25, month % 3 === 0 ? "Meal delivery" : "Dinner reservation", "Leo Wong", month % 3 === 0 ? 61.8 : 94.3, "food");
-    add(start + 27, month % 2 ? "Furniture fund" : "Cleaning supplies", "Sam Parker", month % 2 ? 175 : 29.4, "lodging");
   }
 
   return transactions.sort((left, right) => new Date(right.date) - new Date(left.date));
@@ -565,6 +573,8 @@ function renderFinancialSummary() {
   const availableFoot = document.querySelector("#available-to-save-foot");
   const spendingElement = document.querySelector("#monthly-spending-value");
   const spendingFoot = document.querySelector("#monthly-spending-foot");
+  const upcomingBillsValue = document.querySelector("#upcoming-bills-value");
+  const upcomingBillsFoot = document.querySelector("#upcoming-bills-foot");
   if (!availableElement || !availableFoot || !spendingElement || !spendingFoot) return;
 
   const recent = getRecentTransactions(0, 30);
@@ -580,6 +590,11 @@ function renderFinancialSummary() {
     return date.getFullYear() === currentDate.getFullYear() && date.getMonth() === currentDate.getMonth();
   });
   const monthlySpending = currentMonth.reduce((sum, transaction) => sum + Number(transaction.amount), 0);
+  const upcomingBills = expenseData.filter((transaction) => {
+    if (!transaction.date || transaction.kind === "income" || transaction.status === "rejected") return false;
+    return transaction.status === "pending" || transaction.status === "review";
+  });
+  const upcomingBillsTotal = upcomingBills.reduce((sum, transaction) => sum + Number(transaction.amount), 0);
   const netChange = recentNet - previousNet;
 
   availableElement.textContent = `${recentNet >= 0 ? "+" : "−"}${formatMoney(Math.abs(recentNet))}`;
@@ -590,6 +605,16 @@ function renderFinancialSummary() {
 
   spendingElement.textContent = formatMoney(monthlySpending);
   spendingFoot.textContent = `${currentMonth.length} transaction${currentMonth.length === 1 ? "" : "s"} this month`;
+
+  if (upcomingBillsValue) {
+    upcomingBillsValue.textContent = formatMoney(upcomingBillsTotal);
+  }
+  if (upcomingBillsFoot) {
+    upcomingBillsFoot.textContent = upcomingBills.length
+      ? `${upcomingBills.length} upcoming item${upcomingBills.length === 1 ? "" : "s"}`
+      : "No upcoming bills";
+    upcomingBillsFoot.className = `stat-foot ${upcomingBillsTotal > 0 ? "negative" : "neutral"}`;
+  }
 }
 
 function renderSpendingReview() {

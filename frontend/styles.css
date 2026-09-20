@@ -2045,6 +2045,11 @@ a {
   min-width: min(64%, 320px);
 }
 
+body.dark-theme .search-field {
+  background: #182724;
+  border-color: var(--line);
+}
+
 .search-field span {
   color: var(--muted);
   font-size: 16px;
@@ -2056,6 +2061,9 @@ a {
   outline: none;
   width: 100%;
   color: var(--ink);
+  font-family: "Manrope", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .filter-group {
