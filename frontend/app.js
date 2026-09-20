@@ -70,7 +70,7 @@ function createExampleHistory() {
 const expenseData = createExampleHistory();
 
 try {
-  const savedExpenses = JSON.parse(localStorage.getItem("northstarTransactions") || "[]");
+  const savedExpenses = JSON.parse(localStorage.getItem("splitsenseTransactions") || "[]");
   if (Array.isArray(savedExpenses)) expenseData.unshift(...savedExpenses);
 } catch {
 }
@@ -111,6 +111,7 @@ const settingsDefaults = {
   defaultSplitMethod: "Even split",
   expenseNotifications: true,
   settlementNotifications: true,
+  darkMode: false,
   profileName: "Alex Thompson",
   profileEmail: "alex@email.com"
 };
@@ -386,7 +387,7 @@ function addExpenseToHistory(analysis, description) {
     participants: analysis.classification.participants_included,
     breakdown: analysis.split.breakdown
   });
-  localStorage.setItem("northstarTransactions", JSON.stringify(expenseData.slice(0, 50)));
+  localStorage.setItem("splitsenseTransactions", JSON.stringify(expenseData.slice(0, 50)));
   renderOverviewExpenses();
   refreshTransactionMetrics();
   renderOverviewBalances();
@@ -403,7 +404,7 @@ function updateExpenseReview(expenseId, decision) {
 
   expense.status = "rejected";
   expense.splitDecision = decision;
-  localStorage.setItem("northstarTransactions", JSON.stringify(expenseData.slice(0, 100)));
+  localStorage.setItem("splitsenseTransactions", JSON.stringify(expenseData.slice(0, 100)));
   renderOverviewExpenses();
   refreshTransactionMetrics();
   renderOverviewBalances();
@@ -429,7 +430,7 @@ function approveExpenseSplit(expenseId, memberName) {
     expense.splitDecision = "approved_by_all";
   }
 
-  localStorage.setItem("northstarTransactions", JSON.stringify(expenseData.slice(0, 100)));
+  localStorage.setItem("splitsenseTransactions", JSON.stringify(expenseData.slice(0, 100)));
   renderOverviewExpenses();
   refreshTransactionMetrics();
   renderOverviewBalances();
@@ -875,11 +876,21 @@ function closeNotificationPanel() {
   toggleNotificationPanel(false);
 }
 
+function applyTheme(settings) {
+  const enabled = Boolean(settings.darkMode);
+  document.body.classList.toggle("dark-theme", enabled);
+  const metaTheme = document.querySelector("meta[name='theme-color']");
+  if (metaTheme) {
+    metaTheme.setAttribute("content", enabled ? "#101918" : "#f6f8f5");
+  }
+}
+
 function renderSettingsPage() {
   const grid = document.querySelector("#settings-grid");
   if (!grid) return;
 
   const settings = readSettings();
+  applyTheme(settings);
 
   grid.innerHTML = `
     <section class="setting-card">
@@ -903,6 +914,7 @@ function renderSettingsPage() {
       <div class="card-kicker">Notifications</div>
       <label class="toggle-row"><span>Expense notification</span><input type="checkbox" data-setting="expenseNotifications" ${settings.expenseNotifications ? "checked" : ""} /></label>
       <label class="toggle-row"><span>Transfer notification</span><input type="checkbox" data-setting="settlementNotifications" ${settings.settlementNotifications ? "checked" : ""} /></label>
+      <label class="toggle-row"><span>Dark mode</span><input type="checkbox" data-setting="darkMode" ${settings.darkMode ? "checked" : ""} /></label>
     </section>
 
     <section class="setting-card">
@@ -928,6 +940,7 @@ function updateSettingsStorage(changes) {
   const settings = readSettings();
   const next = { ...settings, ...changes };
   localStorage.setItem("northstarSettings", JSON.stringify(next));
+  applyTheme(next);
   renderSettingsPage();
   renderNotifications();
   updateNotificationBadge();

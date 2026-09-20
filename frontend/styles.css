@@ -15,6 +15,23 @@
   --shadow: 0 18px 45px rgba(34, 54, 44, .06)
 }
 
+body.dark-theme {
+  --ink: #edf6f1;
+  --muted: #8ea6a0;
+  --line: #24322f;
+  --surface: #172422;
+  --canvas: #101918;
+  --green: #17382d;
+  --green-strong: #77d0a6;
+  --peach: #3b2a24;
+  --peach-strong: #f3a67d;
+  --blue: #1d2f50;
+  --indigo: #8fa1ff;
+  --yellow: #574926;
+  --coral: #b95f4d;
+  --shadow: 0 18px 45px rgba(0, 0, 0, .34)
+}
+
 * {
   box-sizing: border-box
 }
@@ -28,7 +45,161 @@ body {
   background: var(--canvas);
   color: var(--ink);
   font-family: "Manrope", sans-serif;
-  font-size: 14px
+  font-size: 14px;
+  transition: background-color .2s ease, color .2s ease
+}
+
+body.dark-theme .sidebar,
+body.dark-theme .workspace-switcher,
+body.dark-theme .workspace-menu,
+body.dark-theme .workspace-option.is-current,
+body.dark-theme .workspace-option,
+body.dark-theme .workspace-action,
+body.dark-theme .setting-card,
+body.dark-theme .member-card,
+body.dark-theme .expense-row,
+body.dark-theme .expense-entry,
+body.dark-theme .notification-item,
+body.dark-theme .notification-empty,
+body.dark-theme .stat-card,
+body.dark-theme .empty-state,
+body.dark-theme .review-empty,
+body.dark-theme .review-stat,
+body.dark-theme .review-category,
+body.dark-theme .review-section,
+body.dark-theme .review-callout,
+body.dark-theme .balance-row,
+body.dark-theme .result-person,
+body.dark-theme .trip-total,
+body.dark-theme .trip-cost,
+body.dark-theme #analysis-result,
+body.dark-theme .modal-panel,
+body.dark-theme .modal-content,
+body.dark-theme .trip-modal-content,
+body.dark-theme #notification-panel {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--ink)
+}
+
+body.dark-theme .workspace-menu-status,
+body.dark-theme .notification-time,
+body.dark-theme .member-meta small,
+body.dark-theme .setting-header small,
+body.dark-theme .card-kicker,
+body.dark-theme .notification-copy p,
+body.dark-theme .notification-copy span,
+body.dark-theme .expense-main span,
+body.dark-theme .member-meta-row,
+body.dark-theme .setting-row span,
+body.dark-theme .toggle-row span,
+body.dark-theme .empty-state,
+body.dark-theme .expense-split-list span,
+body.dark-theme .review-category span,
+body.dark-theme .review-small {
+  color: var(--muted)
+}
+
+body.dark-theme .workspace-option,
+body.dark-theme .workspace-action,
+body.dark-theme .notification-item,
+body.dark-theme .expense-row,
+body.dark-theme .primary-button,
+body.dark-theme .filter-chip,
+body.dark-theme .approval-button,
+body.dark-theme .review-reject-button,
+body.dark-theme .warning-button {
+  color: var(--ink)
+}
+
+body.dark-theme .transaction-income {
+  background: #123b2e;
+  color: #a6f0ca;
+}
+
+body.dark-theme .transaction-expense {
+  background: #3c2626;
+  color: #ffb2a4;
+}
+
+body.dark-theme .status-review {
+  background: #3b2f1d;
+  color: #f6d18f;
+}
+
+body.dark-theme .status-settled {
+  background: #123b2e;
+  color: #a6f0ca;
+}
+
+body.dark-theme .status-pending {
+  background: #1d2447;
+  color: #c8d0ff;
+}
+
+body.dark-theme .status-rejected {
+  background: #3c2626;
+  color: #ffb2a4;
+}
+
+body.dark-theme .insight-card {
+  background: #1a2a27;
+  border-color: #2c3d3a;
+}
+
+body.dark-theme .insight-card strong,
+body.dark-theme .chart-range-label,
+body.dark-theme .chart-range-label .select-button {
+  color: #cfe1d8
+}
+
+body.dark-theme .chart-range-label .select-button {
+  background: #1d2f2c;
+  border-color: #2f4742;
+}
+
+body.dark-theme .secondary-button {
+  background: #1b2d2a;
+  border-color: #2f4742;
+  color: #edf6f1
+}
+
+body.dark-theme .filter-chip {
+  background: #1d2f2c;
+  border-color: #2e4844;
+  color: #edf6f1
+}
+
+body.dark-theme .approval-button {
+  background: #14362d;
+  border-color: #245846;
+  color: #a7efd0
+}
+
+body.dark-theme .review-reject-button {
+  background: #3a272b;
+  border-color: #5a393e;
+  color: #ffb8a8
+}
+
+body.dark-theme .warning-button {
+  background: #31252d;
+  border-color: #503c45;
+  color: #ffd9d0
+}
+
+body.dark-theme .main-view,
+body.dark-theme .page-shell,
+body.dark-theme .content-panel,
+body.dark-theme .panel,
+body.dark-theme .view,
+body.dark-theme .topbar,
+body.dark-theme .toolbar,
+body.dark-theme .stat-card,
+body.dark-theme .section-card,
+body.dark-theme .summary-badge,
+body.dark-theme #notification-panel {
+  background: var(--canvas)
 }
 
 button,
