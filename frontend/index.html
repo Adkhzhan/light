@@ -256,8 +256,9 @@
                   <p>In, out, and still expected</p>
                 </div><button type="button" class="dots-button" aria-label="Balance options">•••</button>
               </div>
-              <div class="balance-total"><span>Net cash flow</span><strong>+$1,248.62</strong></div>
-              <div class="progress-track"><span></span></div>
+              <div class="balance-total"><span id="cash-flow-period">Past 30 days</span><strong id="cash-flow-total">+$0.00</strong></div>
+              <div class="progress-track" aria-label="Income retained after spending"><span id="cash-flow-progress"></span></div>
+              <div class="cash-flow-meta"><span id="cash-flow-inflow">In $0.00</span><span id="cash-flow-outflow">Out $0.00</span></div>
               <div id="overview-balance-list"></div>
               <a class="settle-button" href="#balances" data-route-target="balances">View cash flow <span>→</span></a>
             </article>
@@ -269,7 +270,7 @@
               <p>Your spending is trending up in dining. A small adjustment here could free up $42 this month.
               </p>
             </div>
-            <button class="secondary-button" type="button" data-open-expense>Review spending <span>→</span></button>
+            <button class="secondary-button" type="button" data-review-spending>Review spending <span>→</span></button>
             <button class="close-insight" aria-label="Dismiss insight" type="button">×</button>
           </section>
 
@@ -288,7 +289,7 @@
                 <div class="legend">
                   <div><i class="dot food-dot"></i>Food <b>$462.40</b></div>
                   <div><i class="dot transport-dot"></i>Transport <b>$126.50</b></div>
-                  <div><i class="dot lodging-dot"></i>Lodging <b>$540.00</b></div>
+                  <div><i class="dot lodging-dot"></i>Housing <b>$540.00</b></div>
                   <div><i class="dot misc-dot"></i>Other <b>$119.72</b></div>
                 </div>
               </div>
@@ -392,6 +393,15 @@
         <p class="form-error" id="form-error" role="alert"></p>
       </form>
       <div class="analysis-result" id="analysis-result" aria-live="polite"></div>
+    </section>
+  </div>
+  <div class="modal-backdrop" id="spending-review-modal" aria-hidden="true">
+    <section class="modal spending-review-modal" role="dialog" aria-modal="true" aria-labelledby="spending-review-title">
+      <button class="modal-close" id="close-spending-review" aria-label="Close" type="button">×</button>
+      <div class="modal-kicker">LAST 30 DAYS</div>
+      <h2 id="spending-review-title">Your spending review</h2>
+      <p class="modal-subtitle">A quick read of your recent transaction history, category by category.</p>
+      <div id="spending-review-result" class="spending-review-result" aria-live="polite"></div>
     </section>
   </div>
   <div class="modal-backdrop" id="trip-modal" aria-hidden="true">

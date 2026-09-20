@@ -926,6 +926,22 @@ a {
   color: var(--ink)
 }
 
+.balance-total strong.balance-positive {
+  color: #4b9c74
+}
+
+.balance-total strong.balance-negative {
+  color: #da8263
+}
+
+.cash-flow-meta {
+  display: flex;
+  justify-content: space-between;
+  margin: -8px 0 17px;
+  color: var(--muted);
+  font-size: 10px
+}
+
 .progress-track {
   height: 7px;
   border-radius: 10px;
@@ -1347,6 +1363,116 @@ a {
   color: #398d65
 }
 
+.spending-review-modal {
+  width: min(620px, 100%);
+  max-height: min(720px, 90vh);
+  overflow-y: auto
+}
+
+.review-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 9px;
+  margin-top: 20px
+}
+
+.review-stat {
+  background: #f5faf7;
+  border: 1px solid #e1eee6;
+  border-radius: 9px;
+  padding: 12px
+}
+
+.review-stat span,
+.review-stat small,
+.review-category small,
+.review-largest small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px
+}
+
+.review-stat strong {
+  display: block;
+  margin: 6px 0 4px;
+  font: 600 17px "Space Grotesk"
+}
+
+.review-section {
+  margin-top: 22px
+}
+
+.review-section h3 {
+  font: 600 14px "Space Grotesk";
+  margin: 0 0 10px
+}
+
+.review-category,
+.review-largest {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid #edf1ee;
+  padding: 10px 0;
+  font-size: 11px
+}
+
+.review-category span {
+  display: flex;
+  align-items: center;
+  gap: 7px
+}
+
+.review-category strong,
+.review-largest strong {
+  font-size: 12px
+}
+
+.review-callout {
+  background: #fff9ed;
+  border: 1px solid #f2e4c6;
+  border-radius: 9px;
+  padding: 13px;
+  margin-top: 18px
+}
+
+.review-callout strong {
+  font: 600 12px "Space Grotesk"
+}
+
+.review-callout p {
+  color: #766d5e;
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 5px 0 0
+}
+
+.review-largest {
+  grid-template-columns: 1fr auto;
+}
+
+.review-empty {
+  padding: 26px 0 8px;
+  text-align: center;
+  color: var(--muted)
+}
+
+.review-empty strong,
+.review-empty span {
+  display: block
+}
+
+.review-empty strong {
+  color: var(--ink);
+  font-size: 13px;
+  margin-bottom: 6px
+}
+
+.review-empty span {
+  font-size: 11px
+}
+
 @media(max-width:1050px) {
   .sidebar {
     width: 205px
@@ -1376,6 +1502,10 @@ a {
 }
 
 @media(max-width:700px) {
+  .review-summary-grid {
+    grid-template-columns: 1fr
+  }
+
   .sidebar {
     width: 62px;
     padding: 20px 8px

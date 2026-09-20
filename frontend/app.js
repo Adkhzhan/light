@@ -8,16 +8,53 @@ const members = [
   { name: "Leo Wong", email: "leo@email.com", role: "Credit account", initials: "LW", color: "avatar-blue" }
 ];
 
-const expenseData = [
-  { id: 1, title: "Rent payment", dateLabel: "Yesterday", payer: "Alex Thompson", amount: 1250, status: "settled", category: "lodging" },
-  { id: 2, title: "Grocery run", dateLabel: "Sep 17", payer: "Sam Parker", amount: 118.62, status: "settled", category: "food" },
-  { id: 3, title: "Electric bill", dateLabel: "Sep 16", payer: "Leo Wong", amount: 86.4, status: "pending", category: "misc" },
-  { id: 4, title: "Paycheck", dateLabel: "Sep 15", payer: "Alex Thompson", amount: 2980, status: "settled", category: "misc" },
-  { id: 5, title: "Public transit", dateLabel: "Sep 14", payer: "Alex Thompson", amount: 54.2, status: "pending", category: "transport" },
-  { id: 6, title: "Dining out", dateLabel: "Sep 12", payer: "Sam Parker", amount: 72.8, status: "review", category: "food" },
-  { id: 7, title: "Internet bill", dateLabel: "Sep 11", payer: "Priya Nair", amount: 68, status: "pending", category: "misc" },
-  { id: 8, title: "Pharmacy", dateLabel: "Sep 10", payer: "Leo Wong", amount: 38.45, status: "review", category: "misc" }
-];
+function dateDaysAgo(days) {
+  const value = new Date();
+  value.setHours(12, 0, 0, 0);
+  value.setDate(value.getDate() - days);
+  return value;
+}
+
+function dateLabel(value) {
+  const today = new Date();
+  const date = new Date(value);
+  const difference = Math.round((new Date(today.getFullYear(), today.getMonth(), today.getDate()) - new Date(date.getFullYear(), date.getMonth(), date.getDate())) / 86400000);
+  if (difference === 0) return "Today";
+  if (difference === 1) return "Yesterday";
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(date);
+}
+
+function createExampleHistory() {
+  const transactions = [];
+  let id = 1000;
+  const add = (daysAgo, title, payer, amount, category, kind = "expense", status = "settled") => {
+    const date = dateDaysAgo(daysAgo);
+    transactions.push({ id: id++, title, date: date.toISOString(), dateLabel: dateLabel(date), payer, amount, status, category, kind });
+  };
+
+  for (let month = 0; month < 6; month += 1) {
+    const start = month * 30;
+    add(start + 1, "Rent payment", "Alex Thompson", 1250, "lodging");
+    add(start + 2, "Paycheck", "Alex Thompson", 2980, "misc", "income");
+    add(start + 4, "Electric bill", "Leo Wong", 86.4 + month * 3.2, "misc", "expense", "pending");
+    add(start + 6, "Grocery run", "Sam Parker", 118.62 + month * 4.5, "food");
+    add(start + 8, "Dining out", "Sam Parker", 72.8 + month * 2.4, "food", "expense", "review");
+    add(start + 10, "Public transit", "Alex Thompson", 54.2 + month, "transport");
+    add(start + 12, "Pharmacy", "Leo Wong", 38.45 + month * 1.6, "misc", "expense", "review");
+    add(start + 15, "Internet bill", "Priya Nair", 68, "misc", "expense", "pending");
+    add(start + 16, "Paycheck", "Alex Thompson", 2980, "misc", "income");
+    add(start + 18, "Household supplies", "Priya Nair", 64.3 + month * 3, "misc");
+    add(start + 20, "Coffee and snacks", "Sam Parker", 31.2 + month * 1.8, "food");
+    add(start + 22, "Rideshare", "Alex Thompson", 42.75 + month * 2, "transport");
+    add(start + 24, "Streaming subscriptions", "Priya Nair", 42.97, "misc");
+    add(start + 26, "Weekend groceries", "Sam Parker", 96.4 + month * 5, "food");
+    add(start + 28, "Home supplies", "Leo Wong", 74.6 + month * 2.2, "lodging");
+  }
+
+  return transactions.sort((left, right) => new Date(right.date) - new Date(left.date));
+}
+
+const expenseData = createExampleHistory();
 
 try {
   const savedExpenses = JSON.parse(localStorage.getItem("northstarTransactions") || "[]");
@@ -77,6 +114,8 @@ const workspaceSelector = document.querySelector("#workspace-selector");
 const workspaceMenu = document.querySelector("#workspace-menu");
 const workspaceStatus = document.querySelector("#workspace-menu-status");
 const smartInsight = document.querySelector(".insight-card");
+const spendingReviewModal = document.querySelector("#spending-review-modal");
+const spendingReviewResult = document.querySelector("#spending-review-result");
 
 let currentExpenseFilter = "all";
 let expenseSearchText = "";
@@ -131,6 +170,7 @@ function renderRoute() {
 
   closeNotificationPanel();
   closeModal();
+  closeSpendingReview();
   closeTripModal();
 
   document.querySelectorAll("[data-page]").forEach((page) => {
@@ -260,9 +300,11 @@ function getAllNotifications() {
 }
 
 function addExpenseToHistory(analysis, description) {
+  const now = new Date();
   expenseData.unshift({
     id: Date.now(),
     title: analysis.classification.summary || description,
+    date: now.toISOString(),
     dateLabel: "Today",
     payer: analysis.classification.payer || "Alex",
     amount: analysis.amount,
@@ -273,9 +315,83 @@ function addExpenseToHistory(analysis, description) {
   });
   localStorage.setItem("northstarTransactions", JSON.stringify(expenseData.slice(0, 50)));
   renderOverviewExpenses();
+  renderCashFlowOverview();
   renderExpensePage();
   renderNotifications();
   updateNotificationBadge();
+}
+
+function getRecentTransactions(daysAgoStart, daysAgoEnd) {
+  const now = Date.now();
+  const start = now - daysAgoStart * 86400000;
+  const end = now - daysAgoEnd * 86400000;
+  return expenseData.filter((transaction) => {
+    if (!transaction.date) return false;
+    const timestamp = new Date(transaction.date).getTime();
+    return timestamp <= start && timestamp > end;
+  });
+}
+
+function getRecentSpending(daysAgoStart, daysAgoEnd) {
+  return getRecentTransactions(daysAgoStart, daysAgoEnd).filter((transaction) => transaction.kind !== "income");
+}
+
+function renderCashFlowOverview() {
+  const totalElement = document.querySelector("#cash-flow-total");
+  const progressElement = document.querySelector("#cash-flow-progress");
+  const inflowElement = document.querySelector("#cash-flow-inflow");
+  const outflowElement = document.querySelector("#cash-flow-outflow");
+  if (!totalElement || !progressElement || !inflowElement || !outflowElement) return;
+
+  const recent = getRecentTransactions(0, 30);
+  const inflow = recent.filter((transaction) => transaction.kind === "income").reduce((sum, transaction) => sum + Number(transaction.amount), 0);
+  const outflow = recent.filter((transaction) => transaction.kind !== "income").reduce((sum, transaction) => sum + Number(transaction.amount), 0);
+  const net = inflow - outflow;
+  const retention = inflow + outflow ? Math.max(0, Math.min(100, (net / inflow) * 100)) : 0;
+
+  totalElement.textContent = `${net >= 0 ? "+" : "−"}${formatMoney(Math.abs(net))}`;
+  totalElement.classList.toggle("balance-positive", net >= 0);
+  totalElement.classList.toggle("balance-negative", net < 0);
+  inflowElement.textContent = `In ${formatMoney(inflow)}`;
+  outflowElement.textContent = `Out ${formatMoney(outflow)}`;
+  progressElement.style.width = `${retention}%`;
+}
+
+function renderSpendingReview() {
+  if (!spendingReviewResult) return;
+
+  const recent = getRecentSpending(0, 30);
+  const previous = getRecentSpending(30, 60);
+  const total = recent.reduce((sum, transaction) => sum + Number(transaction.amount), 0);
+  const previousTotal = previous.reduce((sum, transaction) => sum + Number(transaction.amount), 0);
+  const categoryTotals = recent.reduce((totals, transaction) => {
+    totals[transaction.category] = (totals[transaction.category] || 0) + Number(transaction.amount);
+    return totals;
+  }, {});
+  const categoryLabels = { food: "Dining", lodging: "Housing", transport: "Transport", misc: "Other" };
+  const categoryEntries = Object.entries(categoryTotals).sort(([, left], [, right]) => right - left);
+  const topCategory = categoryEntries[0];
+  const topTransaction = [...recent].sort((left, right) => right.amount - left.amount)[0];
+  const change = previousTotal ? ((total - previousTotal) / previousTotal) * 100 : 0;
+  const changeLabel = previousTotal
+    ? `${Math.abs(change).toFixed(0)}% ${change >= 0 ? "higher" : "lower"} than the prior 30 days`
+    : "No earlier comparison available";
+  const recommendation = topCategory
+    ? `${categoryLabels[topCategory[0]]} is your largest category at ${formatMoney(topCategory[1])}. Review the ${recent.filter((transaction) => transaction.category === topCategory[0]).length} related transactions before changing your monthly plan.`
+    : "Add a few transactions to your history to unlock a spending recommendation.";
+
+  spendingReviewResult.innerHTML = recent.length
+    ? `
+      <div class="review-summary-grid">
+        <div class="review-stat"><span>Total spending</span><strong>${formatMoney(total)}</strong><small>past 30 days</small></div>
+        <div class="review-stat"><span>Average per week</span><strong>${formatMoney(total / 4.2857)}</strong><small>${changeLabel}</small></div>
+        <div class="review-stat"><span>Largest category</span><strong>${escapeHTML(topCategory ? categoryLabels[topCategory[0]] : "-")}</strong><small>${topCategory ? formatMoney(topCategory[1]) : "No data"}</small></div>
+      </div>
+      <div class="review-section"><h3>Where it went</h3>${categoryEntries.map(([category, amount]) => `<div class="review-category"><span><i class="dot ${category}-dot"></i>${categoryLabels[category]}</span><strong>${formatMoney(amount)}</strong><small>${total ? Math.round((amount / total) * 100) : 0}%</small></div>`).join("")}</div>
+      <div class="review-callout"><strong>Advisor note</strong><p>${recommendation}</p></div>
+      ${topTransaction ? `<div class="review-section"><h3>Largest recent transaction</h3><div class="review-largest"><span>${escapeHTML(topTransaction.title)}<small>${escapeHTML(topTransaction.dateLabel)} · ${escapeHTML(topTransaction.payer)}</small></span><strong>${formatMoney(topTransaction.amount)}</strong></div></div>` : ""}
+    `
+    : '<div class="review-empty"><strong>No recent spending found.</strong><span>Your last 30 days will appear here as transactions are added.</span></div>';
 }
 
 function renderBalancesPage() {
@@ -628,6 +744,21 @@ function closeTripModal() {
   document.body.classList.remove("modal-open");
 }
 
+function openSpendingReview() {
+  if (!spendingReviewModal) return;
+  renderSpendingReview();
+  spendingReviewModal.classList.add("open");
+  spendingReviewModal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+}
+
+function closeSpendingReview() {
+  if (!spendingReviewModal) return;
+  spendingReviewModal.classList.remove("open");
+  spendingReviewModal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
+}
+
 document.addEventListener("click", (event) => {
   const notificationButton = event.target.closest("#notification-button");
   if (notificationButton) {
@@ -659,6 +790,13 @@ document.addEventListener("click", (event) => {
 
   if (event.target.closest(".close-insight")) {
     dismissSmartInsight();
+    return;
+  }
+
+  const reviewSpendingButton = event.target.closest("[data-review-spending]");
+  if (reviewSpendingButton) {
+    closeNotificationPanel();
+    openSpendingReview();
     return;
   }
 
@@ -755,6 +893,7 @@ document.addEventListener("keydown", (event) => {
     closeWorkspaceMenu();
     closeNotificationPanel();
     closeModal();
+    closeSpendingReview();
     closeTripModal();
   }
 });
@@ -846,6 +985,9 @@ if (document.querySelector("#cancel-itinerary-prompt")) {
 }
 if (document.querySelector("#close-modal")) {
   document.querySelector("#close-modal").addEventListener("click", closeModal);
+}
+if (document.querySelector("#close-spending-review")) {
+  document.querySelector("#close-spending-review").addEventListener("click", closeSpendingReview);
 }
 if (document.querySelector("#close-trip-modal")) {
   document.querySelector("#close-trip-modal").addEventListener("click", closeTripModal);
@@ -1001,6 +1143,7 @@ if (!window.location.hash) {
 
 window.addEventListener("hashchange", renderRoute);
 renderOverviewExpenses();
+renderCashFlowOverview();
 renderOverviewBalances();
 renderOverviewMembers();
 renderExpensePage();
