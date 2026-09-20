@@ -894,6 +894,15 @@ function formatMoney(value, currency = "USD") {
   return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(Number(value) || 0);
 }
 
+function renderTimeAwareGreeting() {
+  const greeting = document.querySelector("#welcome-greeting-text");
+  if (!greeting) return;
+
+  const hour = new Date().getHours();
+  const timeOfDay = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
+  greeting.textContent = `Good ${timeOfDay}, Alex`;
+}
+
 function renderTripAnalysis(analysis) {
   const currency = analysis.currency || "USD";
   const breakdown = Object.entries(analysis.split || {}).map(([person, amount]) => `<div class="result-person"><span>${escapeHTML(person)}</span><b>${formatMoney(amount, currency)}</b></div>`).join("");
@@ -1000,4 +1009,5 @@ renderMembersPage();
 renderSettingsPage();
 renderNotifications();
 updateNotificationBadge();
+renderTimeAwareGreeting();
 renderRoute();
