@@ -162,3 +162,28 @@ def test_trip_analysis_route_returns_nemotron_budget(monkeypatch):
     assert data["source"] == "Nemotron"
     assert data["estimated_total"] == 1200
     assert data["split"]["Sam"] == 400
+
+
+def test_goal_analysis_route_uses_trip_fallback_for_travel(monkeypatch):
+    monkeypatch.setattr(
+        app_module,
+        "analyze_trip_with_nemotron",
+        lambda trip_text, group, currency: {
+            "currency": currency,
+            "estimated_total": 2500,
+            "per_person": 500,
+            "confidence": "low",
+            "cost_breakdown": [{"item": "Flights", "amount": 1250, "assumption": "Planning estimate"}],
+            "split_method": "equal",
+            "split": {person: 500 for person in group},
+            "assumptions": [],
+            "questions": [],
+        },
+    )
+
+    response = app.test_client().post(
+        "/goal-analysis?goal=Travel%20to%20Pittsburgh%20by%20plane%20from%20Philadelphia%20for%203%20nights&currency=USD&group=Alex&group=Sam&group=Priya&group=Leo&group=Jordan"
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()["estimated_total"] == 2500

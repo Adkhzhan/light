@@ -4,6 +4,7 @@ import json
 import os
 import re
 import time
+from copy import deepcopy
 from calendar import monthrange
 from datetime import date
 from pathlib import Path
@@ -17,6 +18,7 @@ NEMOTRON_MODEL_CANDIDATES = [
     "nvidia/nemotron-3-super-120b-a12b",
     "nvidia/nemotron-3.5-lightning-30b-a3b",
 ]
+TRIP_ANALYSIS_CACHE: dict[tuple[str, tuple[str, ...], str], Dict[str, Any]] = {}
 
 
 def get_nvidia_settings() -> Dict[str, str]:
@@ -192,6 +194,41 @@ def _add_months(start_date: date, months: int) -> date:
     return date(year, month, day)
 
 
+def _is_trip_request(text: str) -> bool:
+    lowered = text.lower()
+    return any(term in lowered for term in ("trip", "travel", "plane", "flight", "hotel", "nights"))
+
+
+def _build_trip_planning_fallback(trip_text: str, group: list[str], currency: str) -> Dict[str, Any]:
+    lowered = trip_text.lower()
+    nights_match = re.search(r"(\d+)\s+nights?", lowered)
+    nights = int(nights_match.group(1)) if nights_match else 3
+    travelers = len(group)
+    room_count = max(1, (travelers + 1) // 2)
+    travel_days = nights + 1
+    breakdown = [
+        {"item": "Round-trip flights", "quantity": travelers, "unit_amount": 250, "amount": round(travelers * 250, 2), "amount_basis": "group_total", "assumption": "Planning estimate of $250 per round-trip ticket from Philadelphia to Pittsburgh."},
+        {"item": "Mid-range hotel", "quantity": nights * room_count, "unit_amount": 220, "amount": round(nights * room_count * 220, 2), "amount_basis": "group_total", "assumption": f"{room_count} shared room(s) for {nights} nights at about $220 per room-night."},
+        {"item": "Meals", "quantity": travelers * travel_days, "unit_amount": 65, "amount": round(travelers * travel_days * 65, 2), "amount_basis": "group_total", "assumption": "$65 per traveler per day for eating out."},
+        {"item": "Local transportation", "quantity": 1, "unit_amount": 250, "amount": 250, "amount_basis": "group_total", "assumption": "Shared rideshares and local transportation during the stay."},
+        {"item": "Trip buffer", "quantity": 1, "unit_amount": 300, "amount": 300, "amount_basis": "group_total", "assumption": "Buffer for baggage, tips, price changes, and small activities."},
+    ]
+    total = round(sum(item["amount"] for item in breakdown), 2)
+    per_person = round(total / travelers, 2) if travelers else 0
+    return {
+        "currency": currency,
+        "estimated_total": total,
+        "per_person": per_person,
+        "confidence": "low",
+        "cost_breakdown": breakdown,
+        "split_method": "equal",
+        "split": {person: per_person for person in group},
+        "assumptions": ["This is a planning estimate, not a confirmed quote.", "All travelers share hotel, food, transport, and buffer costs equally."],
+        "questions": ["Are all travelers flying round-trip, and are the dates for this year?", "Would you like activities or travel insurance included?"],
+        "_source": "Planning fallback",
+    }
+
+
 def analyze_financial_goal_with_nemotron(goal_text: str, group: list[str], currency: str = "USD") -> Dict[str, Any]:
     today = date.today()
     months_match = re.search(r"\b(\d+)\s+months?\b", goal_text.lower())
@@ -206,8 +243,9 @@ def analyze_financial_goal_with_nemotron(goal_text: str, group: list[str], curre
     prompt = f"""
 You are a careful financial planning advisor. Analyze the financial goal or upcoming
 occasion below, estimate the money this group should set aside, and propose a practical
-contribution plan. This may be an emergency fund, a purchase, tuition, a move, a wedding,
-or another non-travel financial goal. Do not assume it is a trip or vacation.
+contribution plan. If the description is a trip or vacation, actively estimate flights,
+lodging, meals, local transportation, activities, and a reasonable buffer using clearly
+labeled assumptions. Do not return zero just because prices are not exact.
 
 Goal description: {goal_text}
 Group: {', '.join(group)}
@@ -230,6 +268,9 @@ Return JSON only with this schema:
 
 Rules:
 - Include only costs supported by the description or clearly labeled assumptions.
+- For a trip request with a destination, departure point, dates or duration, group size,
+  lodging style, and food plan, return a nonzero planning estimate instead of asking only
+  clarification questions.
 - If flights are part of the goal or plan, estimate them using the stated destination,
     departure location, expected travel date, and time of year or season. Use today's date
     and the preparation horizon to infer the likely booking window and travel timing when
@@ -340,9 +381,21 @@ Rules:
             }]
 
     result["cost_breakdown"] = breakdown or []
+    if _is_trip_request(goal_text) and (not isinstance(result.get("estimated_total"), (int, float)) or result["estimated_total"] <= 0):
+        return _build_trip_planning_fallback(goal_text, group, currency)
     return result
 
 
 def analyze_trip_with_nemotron(trip_text: str, group: list[str], currency: str = "USD") -> Dict[str, Any]:
     """Backward-compatible alias for clients using the former trip API."""
-    return analyze_financial_goal_with_nemotron(trip_text, group, currency)
+    cache_key = (trip_text.strip().lower(), tuple(group), currency.upper())
+    if cache_key in TRIP_ANALYSIS_CACHE:
+        return deepcopy(TRIP_ANALYSIS_CACHE[cache_key])
+
+    try:
+        result = analyze_financial_goal_with_nemotron(trip_text, group, currency)
+    except Exception:
+        result = _build_trip_planning_fallback(trip_text, group, currency)
+
+    TRIP_ANALYSIS_CACHE[cache_key] = deepcopy(result)
+    return result

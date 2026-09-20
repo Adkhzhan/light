@@ -153,7 +153,13 @@ def _goal_analysis(goal_text: str, currency: str, group: list[str], analyzer) ->
             error_message = "NVIDIA_API_KEY is loaded, but this NVIDIA account is not provisioned for chat inference. Generate a new NVIDIA API key and restart the app."
         return jsonify({"error": error_message, "source": "Nemotron unavailable"}), 503
 
-    return {**analysis, "source": "Nemotron"}
+    source = analysis.pop("_source", "Nemotron")
+    return {**analysis, "source": source}
+
+
+def _is_travel_goal(text: str) -> bool:
+    lowered = text.lower()
+    return any(term in lowered for term in ("trip", "travel", "plane", "flight", "hotel", "nights"))
 
 
 @app.route("/goal-analysis", methods=["GET", "POST"])
@@ -161,7 +167,8 @@ def goal_analysis_endpoint():
     goal_text = request.args.get("goal") or request.form.get("goal") or ""
     currency = request.args.get("currency") or request.form.get("currency") or "USD"
     group = _read_group_values()
-    return _goal_analysis(goal_text, currency, group, analyze_financial_goal_with_nemotron)
+    analyzer = analyze_trip_with_nemotron if _is_travel_goal(goal_text) else analyze_financial_goal_with_nemotron
+    return _goal_analysis(goal_text, currency, group, analyzer)
 
 
 @app.route("/trip-analysis", methods=["GET", "POST"])
