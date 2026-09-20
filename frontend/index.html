@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#f6f8f5" />
-  <title>Split Sense — Fair splits, without the guesswork</title>
+  <title>splitsense — A clearer view of your money</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -131,7 +131,7 @@
 <body>
   <div class="app-shell">
     <aside class="sidebar">
-      <a class="brand" href="#overview" aria-label="Split Sense home">
+      <a class="brand" href="#overview" aria-label="splitsense home">
         <span class="brand-mark"><span></span><span></span><span></span></span>
         <span>split<span>sense</span></span>
       </a>
@@ -139,27 +139,26 @@
         <button class="workspace-switcher" id="workspace-selector" type="button" aria-expanded="false"
           aria-controls="workspace-menu" aria-haspopup="menu" aria-label="Open workspace menu">
           <span class="avatar avatar-indigo">AT</span>
-          <span><strong>Alpine trip</strong><small>4 members</small></span>
+          <span><strong>roommates</strong><small>4 accounts</small></span>
           <span class="workspace-chevron" aria-hidden="true">⌄</span>
         </button>
         <div class="workspace-menu" id="workspace-menu" role="menu" aria-label="Workspace menu" hidden>
           <div class="workspace-menu-body" role="none">
             <button type="button" class="workspace-option is-current" role="menuitem" aria-current="true">
               <span class="avatar avatar-indigo">AT</span>
-              <span><strong>Alpine trip</strong><small>4 members</small></span>
+              <span><strong>roommates</strong><small>4 accounts</small></span>
               <span class="workspace-check" aria-hidden="true">✓</span>
             </button>
           </div>
-          <button type="button" class="workspace-action" data-action="add-group" role="menuitem">+ Add a new
-            group</button>
+          <button type="button" class="workspace-action" data-action="add-group" role="menuitem">+ Add an account</button>
           <div class="workspace-menu-status" id="workspace-menu-status" aria-live="polite"></div>
         </div>
       </div>
       <nav class="main-nav" aria-label="Main navigation">
-        <a class="active" href="#overview" data-route="overview"><span>◈</span> Overview</a>
-        <a href="#expenses" data-route="expenses"><span>↗</span> Expenses <b>8</b></a>
-        <a href="#balances" data-route="balances"><span>⊙</span> Balances</a>
-        <a href="#members" data-route="members"><span>♧</span> Members</a>
+        <a class="active" href="#overview" data-route="overview"><span>◈</span> Dashboard</a>
+        <a href="#expenses" data-route="expenses"><span>↗</span> Transactions <b>8</b></a>
+        <a href="#balances" data-route="balances"><span>⊙</span> Cash flow</a>
+        <a href="#members" data-route="members"><span>♧</span> Accounts</a>
         <a href="#settings" data-route="settings"><span>⚙</span> Settings</a>
       </nav>
       <div class="sidebar-bottom">
@@ -173,7 +172,7 @@
 
     <main class="main-content">
       <header class="topbar">
-        <div class="breadcrumb"><span>Workspaces</span><i>/</i><strong>Alpine trip</strong></div>
+        <div class="breadcrumb"><span>Financial workspace</span><i>/</i><strong>roommates</strong></div>
         <div class="topbar-actions">
           <div class="notification-wrap">
             <button class="icon-button" id="notification-button" type="button"
@@ -188,7 +187,7 @@
               <div class="notification-panel-header">
                 <div>
                   <h2 id="notification-title">Notifications</h2>
-                  <p id="notification-summary">Recent group activity</p>
+                  <p id="notification-summary">Recent money activity</p>
                 </div>
 
                 <button type="button" class="mark-all-read" data-mark-all-read>
@@ -209,32 +208,32 @@
             <div>
               <p class="eyebrow">Sunday, September 19, 2026</p>
               <h1>Good morning, Alex <span>✦</span></h1>
-              <p class="subheading">Here’s how things are looking for your trip.</p>
+              <p class="subheading">A calm view of your cash flow, goals, and next best move.</p>
             </div>
             <div class="welcome-actions">
-              <button class="secondary-button" id="plan-trip-button" type="button"><span>✦</span> Plan trip</button>
-              <button class="primary-button" type="button" data-open-expense><span>＋</span> Add expense</button>
+              <button class="secondary-button" id="plan-trip-button" type="button"><span>✦</span> Build a plan</button>
+              <button class="primary-button" type="button" data-open-expense><span>＋</span> Add transaction</button>
             </div>
           </div>
 
-          <section class="stats-grid" aria-label="Trip summary">
+          <section class="stats-grid" aria-label="Financial summary">
             <article class="stat-card accent-green">
               <div class="stat-icon">↗</div>
-              <div class="stat-label">You are owed</div>
+              <div class="stat-label">Available to save</div>
               <div class="stat-value">$186.40</div>
-              <div class="stat-foot positive">↑ $42.20 <span>this week</span></div>
+              <div class="stat-foot positive">↑ $42.20 <span>vs. last month</span></div>
             </article>
             <article class="stat-card accent-peach">
               <div class="stat-icon">↘</div>
-              <div class="stat-label">You owe</div>
+              <div class="stat-label">Upcoming bills</div>
               <div class="stat-value">$74.15</div>
               <div class="stat-foot negative">↓ $12.80 <span>this week</span></div>
             </article>
             <article class="stat-card accent-blue">
               <div class="stat-icon">◷</div>
-              <div class="stat-label">Trip spending</div>
+              <div class="stat-label">Monthly spending</div>
               <div class="stat-value">$1,248.62</div>
-              <div class="stat-foot neutral">8 expenses <span>since Sep 14</span></div>
+              <div class="stat-foot neutral">8 transactions <span>since Sep 14</span></div>
             </article>
           </section>
 
@@ -242,8 +241,8 @@
             <article class="panel expenses-panel">
               <div class="panel-heading">
                 <div>
-                  <h2>Recent expenses</h2>
-                  <p>Your group’s latest activity</p>
+                  <h2>Recent transactions</h2>
+                  <p>Your latest money activity</p>
                 </div>
                 <a class="text-button" href="#expenses" data-route-target="expenses">View all <span>→</span></a>
               </div>
@@ -253,24 +252,24 @@
             <article class="panel balance-panel">
               <div class="panel-heading">
                 <div>
-                  <h2>Balances</h2>
-                  <p>Who owes who</p>
+                  <h2>Cash flow</h2>
+                  <p>In, out, and still expected</p>
                 </div><button type="button" class="dots-button" aria-label="Balance options">•••</button>
               </div>
-              <div class="balance-total"><span>Total group spend</span><strong>$1,248.62</strong></div>
+              <div class="balance-total"><span>Net cash flow</span><strong>+$1,248.62</strong></div>
               <div class="progress-track"><span></span></div>
               <div id="overview-balance-list"></div>
-              <a class="settle-button" href="#balances" data-route-target="balances">Settle up <span>→</span></a>
+              <a class="settle-button" href="#balances" data-route-target="balances">View cash flow <span>→</span></a>
             </article>
           </section>
 
           <section class="insight-card">
             <div class="insight-sparkle">✦</div>
             <div><strong>Smart insight</strong>
-              <p>Sam hasn’t been included in the last 2 food expenses. Want to check if they’re joining dinner tonight?
+              <p>Your spending is trending up in dining. A small adjustment here could free up $42 this month.
               </p>
             </div>
-            <button class="secondary-button" type="button" data-open-expense>Review expense <span>→</span></button>
+            <button class="secondary-button" type="button" data-open-expense>Review spending <span>→</span></button>
             <button class="close-insight" aria-label="Dismiss insight" type="button">×</button>
           </section>
 
@@ -279,8 +278,8 @@
               <div class="panel-heading">
                 <div>
                   <h2>Spending by category</h2>
-                  <p>Across all trip expenses</p>
-                </div><button class="select-button" type="button">This trip⌄</button>
+                  <p>Across this month’s transactions</p>
+                </div><button class="select-button" type="button">This month⌄</button>
               </div>
               <div class="chart-wrap">
                 <div class="donut-chart">
@@ -297,8 +296,8 @@
             <article class="panel members-panel">
               <div class="panel-heading">
                 <div>
-                  <h2>Trip members <span class="count-pill">4</span></h2>
-                  <p>Everyone in Alpine trip</p>
+                  <h2>Accounts <span class="count-pill">4</span></h2>
+                  <p>Your connected money sources</p>
                 </div><a class="text-button" href="#members" data-route-target="members">Manage <span>→</span></a>
               </div>
               <div class="member-list" id="overview-member-list"></div>
@@ -309,20 +308,20 @@
         <section class="page-section" data-page="expenses" hidden>
           <div class="view-header">
             <div>
-              <p class="eyebrow">Trip activity</p>
-              <h2>Expenses</h2>
+              <p class="eyebrow">Money activity</p>
+              <h2>Transactions</h2>
             </div>
-            <button class="primary-button" type="button" data-open-expense><span>＋</span> Add expense</button>
+            <button class="primary-button" type="button" data-open-expense><span>＋</span> Add transaction</button>
           </div>
           <div class="panel">
             <div class="toolbar">
-              <label class="search-field" aria-label="Search expenses">
+              <label class="search-field" aria-label="Search transactions">
                 <span>⌕</span>
-                <input id="expense-search" type="search" placeholder="Search expenses" />
+                <input id="expense-search" type="search" placeholder="Search transactions" />
               </label>
-              <div class="filter-group" aria-label="Expense filters">
+              <div class="filter-group" aria-label="Transaction filters">
                 <button type="button" class="filter-chip active" data-filter="all">All</button>
-                <button type="button" class="filter-chip" data-filter="settled">Settled</button>
+                <button type="button" class="filter-chip" data-filter="settled">Cleared</button>
                 <button type="button" class="filter-chip" data-filter="pending">Pending</button>
                 <button type="button" class="filter-chip" data-filter="review">Review</button>
               </div>
@@ -335,16 +334,16 @@
           <div class="view-header">
             <div>
               <p class="eyebrow">Money overview</p>
-              <h2>Balances</h2>
+              <h2>Cash flow</h2>
             </div>
           </div>
           <div class="stats-grid balances-summary" id="balances-summary"></div>
           <div class="panel">
             <div class="panel-heading">
               <div>
-                <h2>Member balances</h2>
-                <p>See who owes what.</p>
-              </div><button class="settle-button secondary" type="button" data-settle-up>Settle up
+                <h2>Account balances</h2>
+                <p>See what is available and what is committed.</p>
+              </div><button class="settle-button secondary" type="button" data-settle-up>Review transfers
                 <span>→</span></button>
             </div>
             <div class="balance-list" id="balances-list"></div>
@@ -355,13 +354,13 @@
           <div class="view-header">
             <div>
               <p class="eyebrow">People</p>
-              <h2>Members</h2>
+              <h2>Accounts</h2>
             </div>
-            <button class="primary-button" type="button" data-invite-member><span>＋</span> Invite member</button>
+            <button class="primary-button" type="button" data-invite-member><span>＋</span> Connect account</button>
           </div>
           <div class="panel member-page-panel">
             <div class="member-summary-row">
-              <div class="summary-badge"><strong id="member-count">0</strong><span>members</span></div>
+              <div class="summary-badge"><strong id="member-count">0</strong><span>accounts</span></div>
             </div>
             <div class="member-list member-page-list" id="members-list"></div>
           </div>
@@ -383,14 +382,13 @@
   <div class="modal-backdrop" id="expense-modal" aria-hidden="true">
     <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <button class="modal-close" id="close-modal" aria-label="Close" type="button">×</button>
-      <div class="modal-kicker">NEW EXPENSE</div>
-      <h2 id="modal-title">What did you pay for?</h2>
-      <p class="modal-subtitle">Describe the expense, amount, and who was there. Nemotron will figure out the fair
-        split.</p>
+      <div class="modal-kicker">NEW TRANSACTION</div>
+      <h2 id="modal-title">What happened with your money?</h2>
+      <p class="modal-subtitle">Describe the transaction and amount. splitsense will categorize it and show the impact on your cash flow.</p>
       <form id="expense-form">
-        <label class="field-label" for="expense-description">Expense description</label>
-        <textarea id="expense-description" required placeholder="Dinner was $84. Sam wasn't there."></textarea>
-        <button class="primary-button modal-submit" type="submit"><span>✦</span> Analyze fair split</button>
+        <label class="field-label" for="expense-description">Transaction description</label>
+        <textarea id="expense-description" required placeholder="Paid $84 for groceries at Whole Foods."></textarea>
+        <button class="primary-button modal-submit" type="submit"><span>✦</span> Analyze transaction</button>
         <p class="form-error" id="form-error" role="alert"></p>
       </form>
       <div class="analysis-result" id="analysis-result" aria-live="polite"></div>
@@ -399,24 +397,39 @@
   <div class="modal-backdrop" id="trip-modal" aria-hidden="true">
     <section class="modal trip-modal" role="dialog" aria-modal="true" aria-labelledby="trip-modal-title">
       <button class="modal-close" id="close-trip-modal" aria-label="Close" type="button">×</button>
-      <div class="modal-kicker">TRIP PLANNER</div>
-      <h2 id="trip-modal-title">How much should this trip cost?</h2>
-      <p class="modal-subtitle">Describe the itinerary and Nemotron will estimate the budget and a fair split.</p>
+      <div class="modal-kicker">PLAN A FINANCIAL GOAL</div>
+      <h2 id="trip-modal-title">What are you planning for?</h2>
+      <p class="modal-subtitle">Describe a goal or upcoming plan and splitsense will estimate the budget, assumptions, and monthly share.</p>
+      <div class="itinerary-prompt" id="itinerary-prompt" hidden>
+        <div class="itinerary-prompt-card">
+          <label class="field-label" for="itinerary-location">Goal or occasion</label>
+          <input id="itinerary-location" type="text" placeholder="Emergency fund" />
+          <label class="field-label" for="itinerary-people">People contributing</label>
+          <input id="itinerary-people" type="number" min="1" value="1" />
+          <label class="field-label" for="itinerary-days">Months to prepare</label>
+          <input id="itinerary-days" type="number" min="1" value="6" />
+          <div class="analysis-actions">
+            <button class="secondary-button" id="cancel-itinerary-prompt" type="button">Cancel</button>
+            <button class="primary-button" id="submit-itinerary-prompt" type="button"><span>✦</span> Create plan</button>
+          </div>
+        </div>
+      </div>
       <form id="trip-form">
-        <label class="field-label" for="trip-description">Trip details</label>
+        <button class="secondary-button" id="generate-itinerary-button" type="button"><span>✦</span> Generate goal</button>
+        <label class="field-label" for="trip-description">Plan details</label>
         <textarea id="trip-description" required
-          placeholder="Four days in Lisbon: flights are booked, 3 nights in an apartment, airport transfers, dinners out, and a day trip to Sintra."></textarea>
+          placeholder="I want to build a $5,000 emergency fund over the next 6 months while keeping room for rent and essentials."></textarea>
         <div class="form-grid">
           <div><label class="field-label" for="trip-currency">Currency</label><select id="trip-currency">
               <option>USD</option>
               <option>EUR</option>
-              <option>GBP</option>
               <option>CAD</option>
+              <option>GBP</option>
             </select></div>
-          <div><label class="field-label" for="trip-members">Group members</label><input id="trip-members"
-              value="Alex, Sam, Priya, Leo" required /></div>
+            <div><label class="field-label" for="trip-members">Contributors</label><input id="trip-members"
+              value="Alex" required /></div>
         </div>
-        <button class="primary-button modal-submit" type="submit"><span>✦</span> Estimate trip budget</button>
+        <button class="primary-button modal-submit" type="submit"><span>✦</span> Estimate plan</button>
         <p class="form-error" id="trip-form-error" role="alert"></p>
       </form>
       <div class="trip-analysis-result" id="trip-analysis-result" aria-live="polite"></div>

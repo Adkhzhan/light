@@ -4,6 +4,8 @@ import json
 import os
 import re
 import time
+from calendar import monthrange
+from datetime import date
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -18,9 +20,9 @@ NEMOTRON_MODEL_CANDIDATES = [
 
 
 def get_nvidia_settings() -> Dict[str, str]:
-    api_key = os.getenv("NVIDIA_API_KEY", "")
+    api_key = os.getenv("NVIDIA_API_KEY", "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")
     base_url = os.getenv("NVIDIA_BASE_URL", "https://integrate.api.nvidia.com/v1")
-    model = os.getenv("NVIDIA_MODEL", "nvidia/nemotron-nano-3-30b-a3b")
+    model = os.getenv("NVIDIA_MODEL", "nvidia/nemotron-3-super-120b-a12b")
 
     if not api_key:
         secrets_path = Path(__file__).resolve().parent / ".streamlit" / "secrets.toml"
@@ -47,11 +49,32 @@ def get_nvidia_settings() -> Dict[str, str]:
 
 
 def _extract_json_from_text(text: str) -> Dict[str, Any]:
-    text = text.strip()
-    if text.startswith("```"):
-        text = re.sub(r"^```(?:json)?\s*", "", text)
-        text = re.sub(r"\s*```$", "", text)
-    return json.loads(text)
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"\s*```$", "", cleaned)
+
+    try:
+        parsed = json.loads(cleaned)
+        if isinstance(parsed, dict):
+            return parsed
+    except json.JSONDecodeError:
+        pass
+
+    # Nemotron can occasionally add a short preface or trailing note despite the
+    # JSON-only instruction. Decode the first complete object in that response.
+    decoder = json.JSONDecoder()
+    for index, character in enumerate(cleaned):
+        if character != "{":
+            continue
+        try:
+            parsed, _ = decoder.raw_decode(cleaned[index:])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(parsed, dict):
+            return parsed
+
+    raise json.JSONDecodeError("No JSON object found in model response", cleaned, 0)
 
 
 def _call_nemotron_once(
@@ -161,14 +184,36 @@ Rules:
     return call_nemotron(messages, max_tokens=500)
 
 
-def analyze_trip_with_nemotron(trip_text: str, group: list[str], currency: str = "USD") -> Dict[str, Any]:
-    prompt = f"""
-You are planning a shared trip budget. Estimate the money this group should set aside
-from the itinerary description, and propose a fair split.
+def _add_months(start_date: date, months: int) -> date:
+    month_index = start_date.month - 1 + months
+    year = start_date.year + month_index // 12
+    month = month_index % 12 + 1
+    day = min(start_date.day, monthrange(year, month)[1])
+    return date(year, month, day)
 
-Trip description: {trip_text}
+
+def analyze_financial_goal_with_nemotron(goal_text: str, group: list[str], currency: str = "USD") -> Dict[str, Any]:
+    today = date.today()
+    months_match = re.search(r"\b(\d+)\s+months?\b", goal_text.lower())
+    months_to_prepare = int(months_match.group(1)) if months_match else None
+    planning_date = _add_months(today, months_to_prepare) if months_to_prepare else None
+    timing_context = (
+        f"Preparation horizon: {months_to_prepare} months, approximately through {planning_date.isoformat()}."
+        if planning_date
+        else "Preparation horizon: not specified; ask for the target timing when it affects pricing."
+    )
+
+    prompt = f"""
+You are a careful financial planning advisor. Analyze the financial goal or upcoming
+occasion below, estimate the money this group should set aside, and propose a practical
+contribution plan. This may be an emergency fund, a purchase, tuition, a move, a wedding,
+or another non-travel financial goal. Do not assume it is a trip or vacation.
+
+Goal description: {goal_text}
 Group: {', '.join(group)}
 Currency: {currency}
+Today's date: {today.isoformat()}
+{timing_context}
 
 Return JSON only with this schema:
 {{
@@ -176,7 +221,7 @@ Return JSON only with this schema:
   "estimated_total": 0,
   "per_person": 0,
   "confidence": "high | medium | low",
-  "cost_breakdown": [{{"item": "lodging", "amount": 0, "assumption": "..."}}],
+    "cost_breakdown": [{{"item": "initial deposit", "quantity": 1, "unit_amount": 0, "amount": 0, "amount_basis": "group_total", "assumption": "..."}}],
   "split_method": "equal | weighted | custom",
   "split": {{"Person": 0}},
   "assumptions": ["..."],
@@ -185,6 +230,32 @@ Return JSON only with this schema:
 
 Rules:
 - Include only costs supported by the description or clearly labeled assumptions.
+- If flights are part of the goal or plan, estimate them using the stated destination,
+    departure location, expected travel date, and time of year or season. Use today's date
+    and the preparation horizon to infer the likely booking window and travel timing when
+    the description gives a preparation period. Account for peak and off-peak travel and
+    state the seasonal and booking-window assumptions in the breakdown.
+- Every cost item must identify whether its amount is a "group_total", "per_person", or
+    "per_unit" amount. For per-person or per-unit costs, set quantity, set unit_amount to
+    the price for one person or unit, and set amount to unit_amount multiplied by quantity.
+    Never put a single-person or single-unit price in the group-level amount.
+- Flight prices are normally quoted per ticket. For shared flights, use one ticket per
+    traveling contributor and include the destination and seasonal assumption.
+- Apply the same basis logic to lodging, meals, local transport, activities, deposits,
+    and every other line item. For costs such as a hotel room or rental car that are already
+    shared prices, use amount_basis "group_total" rather than multiplying by contributors.
+- Use today's date and the preparation horizon to estimate lodging availability and seasonal
+    pricing too. If the destination or target travel date is missing, ask for it rather than
+    presenting a precise current price.
+- If flights are mentioned but the destination or timing is missing, do not invent a
+    route or season. Add a question requesting the missing details and label the flight
+    amount as a broad planning estimate or leave it unpriced when a responsible estimate
+    is not possible.
+- Never present a precise airfare as confirmed. Flight estimates should reflect destination
+    and seasonality and include the assumptions used to produce them.
+- Always return at least one cost_breakdown item when estimated_total is greater than zero.
+    Never return an empty cost_breakdown array; use a broad item such as "Goal funding"
+    with a clear assumption when a more detailed category is not possible.
 - Split shared costs equally unless the description gives a different responsibility.
 - estimated_total must equal the sum of cost_breakdown amounts, rounded to two decimals.
 - per_person and split must account for every group member and sum to estimated_total.
@@ -192,10 +263,86 @@ Rules:
 - Return valid JSON and no text outside the JSON object.
 """
     messages = [
-        {"role": "system", "content": "You are a careful trip-budget analyst. Never present guesses as confirmed prices."},
+        {"role": "system", "content": "You are a careful financial-goal analyst. Never present guesses as confirmed prices or guaranteed advice."},
         {"role": "user", "content": prompt},
     ]
     result = call_nemotron(messages, max_tokens=1200)
     if "raw_response" in result:
-        raise ValueError("Nemotron returned an invalid trip analysis")
+        raise ValueError("Nemotron returned an invalid financial goal analysis")
+
+    breakdown = result.get("cost_breakdown")
+    if not isinstance(breakdown, list) or not breakdown:
+        for alternate_key in ("breakdown", "costs", "items", "expenses"):
+            alternate = result.get(alternate_key)
+            if isinstance(alternate, (list, dict)) and alternate:
+                breakdown = alternate
+                break
+
+    if isinstance(breakdown, dict):
+        breakdown = [
+            {"item": str(item), "amount": amount, "assumption": "Provided by the financial plan."}
+            for item, amount in breakdown.items()
+        ]
+
+    if isinstance(breakdown, list):
+        normalized_breakdown = []
+        for item in breakdown:
+            if isinstance(item, dict):
+                normalized_breakdown.append({
+                    "item": str(item.get("item") or item.get("name") or item.get("category") or "Planning item"),
+                    "quantity": item.get("quantity", 1),
+                    "unit_amount": item.get("unit_amount"),
+                    "amount": item.get("amount", item.get("cost", item.get("value", 0))),
+                    "amount_basis": str(item.get("amount_basis") or "group_total"),
+                    "assumption": str(item.get("assumption") or "Provided by the financial plan."),
+                })
+            elif isinstance(item, str) and item.strip():
+                normalized_breakdown.append({
+                    "item": item.strip(),
+                    "amount": 0,
+                    "assumption": "Amount was not provided by the model.",
+                })
+        breakdown = normalized_breakdown
+
+    contributor_count = len(group)
+    for item in breakdown or []:
+        item_name = item.get("item", "").lower()
+        amount_basis = str(item.get("amount_basis", "")).lower()
+        quantity = item.get("quantity")
+        unit_amount = item.get("unit_amount")
+        if amount_basis in {"per_person", "per_ticket", "per_unit", "unit"}:
+            if isinstance(unit_amount, (int, float)):
+                if amount_basis == "per_person" or "flight" in item_name:
+                    item["quantity"] = contributor_count
+                else:
+                    item["quantity"] = quantity if isinstance(quantity, (int, float)) and quantity > 0 else contributor_count
+                item["amount"] = round(unit_amount * item["quantity"], 2)
+                item["amount_basis"] = "group_total"
+
+    numeric_amounts = [
+        item["amount"] for item in breakdown or []
+        if isinstance(item.get("amount"), (int, float))
+    ]
+    if numeric_amounts:
+        result["estimated_total"] = round(sum(numeric_amounts), 2)
+        if result.get("split_method", "equal") == "equal" and group:
+            per_person = round(result["estimated_total"] / contributor_count, 2)
+            result["per_person"] = per_person
+            result["split"] = {person: per_person for person in group}
+
+    if not isinstance(breakdown, list) or not breakdown:
+        estimated_total = result.get("estimated_total", 0)
+        if isinstance(estimated_total, (int, float)) and estimated_total > 0:
+            breakdown = [{
+                "item": "Goal funding",
+                "amount": estimated_total,
+                "assumption": "The model returned a total without detailed categories.",
+            }]
+
+    result["cost_breakdown"] = breakdown or []
     return result
+
+
+def analyze_trip_with_nemotron(trip_text: str, group: list[str], currency: str = "USD") -> Dict[str, Any]:
+    """Backward-compatible alias for clients using the former trip API."""
+    return analyze_financial_goal_with_nemotron(trip_text, group, currency)

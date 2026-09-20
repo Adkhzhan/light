@@ -4,7 +4,11 @@ import re
 from pathlib import Path
 
 from split_logic import classify_expense, compute_split
-from nemotron_client import analyze_trip_with_nemotron, classify_expense_with_nemotron
+from nemotron_client import (
+    analyze_financial_goal_with_nemotron,
+    analyze_trip_with_nemotron,
+    classify_expense_with_nemotron,
+)
     
 BASE_DIR = Path(__file__).resolve().parent
 FRONTEND_DIR = BASE_DIR / "frontend"
@@ -134,24 +138,35 @@ def health_check():
     return jsonify({"status": "ok"})
 
 
-@app.route("/trip-analysis", methods=["GET", "POST"])
-def trip_analysis_endpoint():
-    trip_text = request.args.get("trip") or request.form.get("trip") or ""
-    currency = request.args.get("currency") or request.form.get("currency") or "USD"
-    group = _read_group_values()
-
-    if not trip_text.strip() or not group:
-        return jsonify({"error": "A trip description and at least one group member are required."}), 400
+def _goal_analysis(goal_text: str, currency: str, group: list[str], analyzer) -> tuple[dict, int] | dict:
+    if not goal_text.strip() or not group:
+        return jsonify({"error": "A financial goal and at least one contributor are required."}), 400
 
     try:
-        analysis = analyze_trip_with_nemotron(trip_text.strip(), group, currency.upper())
+        analysis = analyzer(goal_text.strip(), group, currency.upper())
     except Exception as exc:
         error_message = str(exc)
         if "Function" in error_message and "not found for account" in error_message:
             error_message = "NVIDIA_API_KEY is loaded, but this NVIDIA account is not provisioned for chat inference. Generate a new NVIDIA API key and restart the app."
         return jsonify({"error": error_message, "source": "Nemotron unavailable"}), 503
 
-    return jsonify({**analysis, "source": "Nemotron"})
+    return {**analysis, "source": "Nemotron"}
+
+
+@app.route("/goal-analysis", methods=["GET", "POST"])
+def goal_analysis_endpoint():
+    goal_text = request.args.get("goal") or request.form.get("goal") or ""
+    currency = request.args.get("currency") or request.form.get("currency") or "USD"
+    group = _read_group_values()
+    return _goal_analysis(goal_text, currency, group, analyze_financial_goal_with_nemotron)
+
+
+@app.route("/trip-analysis", methods=["GET", "POST"])
+def trip_analysis_endpoint():
+    trip_text = request.args.get("trip") or request.form.get("trip") or ""
+    currency = request.args.get("currency") or request.form.get("currency") or "USD"
+    group = _read_group_values()
+    return _goal_analysis(trip_text, currency, group, analyze_trip_with_nemotron)
 
 
 if __name__ == "__main__":
