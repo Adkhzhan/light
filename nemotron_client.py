@@ -199,15 +199,28 @@ def _is_trip_request(text: str) -> bool:
     return any(term in lowered for term in ("trip", "travel", "plane", "flight", "hotel", "nights"))
 
 
+def _trip_route_label(trip_text: str) -> str:
+    route_match = re.search(r"\bfrom\s+(.+?)\s+to\s+(.+?)(?:\s+for\b|\s+over\b|\s+with\b|[,.]|$)", trip_text, re.IGNORECASE)
+    if route_match:
+        return f"{route_match.group(1).strip()} to {route_match.group(2).strip()}"
+
+    destination_match = re.search(r"\bto\s+(.+?)(?:\s+for\b|\s+over\b|\s+with\b|[,.]|$)", trip_text, re.IGNORECASE)
+    if destination_match:
+        return destination_match.group(1).strip()
+
+    return "the requested destination"
+
+
 def _build_trip_planning_fallback(trip_text: str, group: list[str], currency: str) -> Dict[str, Any]:
     lowered = trip_text.lower()
+    route_label = _trip_route_label(trip_text)
     nights_match = re.search(r"(\d+)\s+nights?", lowered)
     nights = int(nights_match.group(1)) if nights_match else 3
     travelers = len(group)
     room_count = max(1, (travelers + 1) // 2)
     travel_days = nights + 1
     breakdown = [
-        {"item": "Round-trip flights", "quantity": travelers, "unit_amount": 250, "amount": round(travelers * 250, 2), "amount_basis": "group_total", "assumption": "Planning estimate of $250 per round-trip ticket from Philadelphia to Pittsburgh."},
+        {"item": "Round-trip flights", "quantity": travelers, "unit_amount": 250, "amount": round(travelers * 250, 2), "amount_basis": "group_total", "assumption": f"Planning estimate of $250 per round-trip ticket for travel from {route_label}."},
         {"item": "Mid-range hotel", "quantity": nights * room_count, "unit_amount": 220, "amount": round(nights * room_count * 220, 2), "amount_basis": "group_total", "assumption": f"{room_count} shared room(s) for {nights} nights at about $220 per room-night."},
         {"item": "Meals", "quantity": travelers * travel_days, "unit_amount": 65, "amount": round(travelers * travel_days * 65, 2), "amount_basis": "group_total", "assumption": "$65 per traveler per day for eating out."},
         {"item": "Local transportation", "quantity": 1, "unit_amount": 250, "amount": 250, "amount_basis": "group_total", "assumption": "Shared rideshares and local transportation during the stay."},

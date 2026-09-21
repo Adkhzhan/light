@@ -1,5 +1,6 @@
 from split_logic import classify_expense, compute_split
 import app as app_module
+import nemotron_client
 from app import app
 
 
@@ -187,3 +188,20 @@ def test_goal_analysis_route_uses_trip_fallback_for_travel(monkeypatch):
 
     assert response.status_code == 200
     assert response.get_json()["estimated_total"] == 2500
+
+
+def test_trip_fallback_uses_requested_route(monkeypatch):
+    monkeypatch.setattr(
+        nemotron_client,
+        "analyze_financial_goal_with_nemotron",
+        lambda trip_text, group, currency: (_ for _ in ()).throw(RuntimeError("Nemotron unavailable")),
+    )
+
+    result = nemotron_client.analyze_trip_with_nemotron(
+        "Travel from Boston to Lisbon for 3 nights",
+        ["Alex"],
+        "USD",
+    )
+
+    assert "Boston to Lisbon" in result["cost_breakdown"][0]["assumption"]
+    assert "Philadelphia to Pittsburgh" not in result["cost_breakdown"][0]["assumption"]

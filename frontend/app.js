@@ -1348,9 +1348,21 @@ function formatMoney(value, currency = "USD") {
 
 function renderTimeAwareGreeting() {
   const greeting = document.querySelector("#welcome-greeting-text");
+  const currentDate = document.querySelector("#current-date");
+  const now = new Date();
+
+  if (currentDate) {
+    currentDate.textContent = new Intl.DateTimeFormat(undefined, {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric"
+    }).format(now);
+  }
+
   if (!greeting) return;
 
-  const hour = new Date().getHours();
+  const hour = now.getHours();
   const timeOfDay = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
   greeting.textContent = `Good ${timeOfDay}, Alex`;
 }
