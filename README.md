@@ -1,10 +1,14 @@
 # SplitSense
 
+![](slides/splitsense1.png)
+
 SplitSense is a smart shared-expense assistant built to make group finances easier, more transparent, and less awkward. It helps roommates, friends, and travel groups understand who paid, who was part of the expense, and how the total should be divided fairly.
 
 The app combines natural-language expense parsing, rule-based splitting logic, and NVIDIA Nemotron-powered financial analysis to deliver a polished budgeting experience.
 
 ## Why this project exists
+
+![](slides/splitsense2.png)
 
 Shared expenses are one of the easiest ways for groups to lose track of money. A dinner bill, a hotel stay, a weekend trip, or a shared purchase often leads to confusion about:
 
@@ -16,6 +20,10 @@ Shared expenses are one of the easiest ways for groups to lose track of money. A
 SplitSense solves that by turning messy text descriptions into a structured expense result and clear financial breakdown.
 
 ## What SplitSense does
+
+![](slides/splitsense3.png)
+![](slides/splitsense4.png)
+![](slides/splitsense5.png)
 
 SplitSense helps users:
 
